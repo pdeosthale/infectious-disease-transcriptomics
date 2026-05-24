@@ -1,0 +1,8 @@
+sample_id,condition,age,sex,severity,age_group,infected
+S001,COVID-19,45,F,moderate,middle,True
+S002,Influenza,32,M,mild,young,True
+S003,Healthy,28,F,none,young,False
+S004,COVID-19,67,M,severe,older,True
+S006,Healthy,38,M,none,middle,False
+S007,Influenza,41,F,severe,middle,True
+S008,COVID-19,53,M,mild,middle,True
