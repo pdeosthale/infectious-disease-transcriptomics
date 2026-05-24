@@ -1,0 +1,16 @@
+Pairwise Log2FC Analysis Summary
+========================================
+
+Number of genes: 25
+Number of samples: 7
+Conditions: COVID-19, Influenza, Healthy
+
+COVID-19 vs Influenza:
+  Top upregulated: FCGR3A (log2FC = 1.16)
+
+COVID-19 vs Healthy:
+  Top upregulated: OAS1 (log2FC = 2.70)
+
+Influenza vs Healthy:
+  Top upregulated: OAS1 (log2FC = 2.42)
+
