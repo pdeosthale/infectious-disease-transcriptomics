@@ -32,11 +32,11 @@ This is an independent secondary analysis of publicly available data from GEO (G
 
 ### 1. Bacterial infection triggers the largest transcriptomic shift
 
-Even after correcting for age confounding, bacterial infection produced ~8,400 DE genes — roughly 3x more than any viral infection. This reflects fundamental biological differences: bacterial infections activate neutrophil-dominated innate immunity through TLR2/4 pattern recognition and acute phase responses, while viral infections primarily trigger more targeted interferon-mediated pathways.
+Even after correcting for age confounding, bacterial infection produced ~8,400 DE genes; roughly 3x more than any viral infection. This reflects fundamental biological differences: bacterial infections activate neutrophil dominated innate immunity through TLR2/4 pattern recognition and acute phase responses, while viral infections primarily trigger more targeted interferon mediated pathways.
 
 ### 2. Age confounding substantially inflated the bacterial signal
 
-Healthy controls in this dataset are college-age students (median 18), while bacterial patients are elderly (median 60). Without adjusting for age, bacterial infection appeared to have 10,564 DE genes. Adding age as an adjustment variable removed ~2,128 genes (20%), and COVID-19 dropped by ~996 genes (26%). This demonstrates that clinical cohort studies with unbalanced demographics can produce misleading results without proper covariate modeling.
+Healthy controls in this dataset are young (median 18), while bacterial patients are elderly (median 60). Without adjusting for age, bacterial infection appeared to have 10,564 DE genes. Adding age as an adjustment variable removed ~2,128 genes (20%), and COVID-19 dropped by ~996 genes (26%). This demonstrates that clinical cohort studies with unbalanced demographics can produce misleading results without proper covariate modeling.
 
 | Comparison | Without Age Adjustment | With Age Adjustment | Removed | % Change |
 |---|---|---|---|---|
@@ -53,21 +53,21 @@ IFI27 was the strongest upregulated gene in COVID-19 (log2FC = 4.15), consistent
 
 ### 5. The interferon response is muted in blood
 
-Only 3 of 12 classic interferon-stimulated genes (ISGs) were significantly upregulated in blood (IFI27, IFITM3, OAS1). This is expected — the interferon response is strongest at the mucosal infection site (nasal epithelium, lungs). In blood, the signal is diluted across all circulating cell types. Nasal swab RNA-seq would show much stronger ISG activation.
+Only 3 of 12 classic interferon-stimulated genes (ISGs) were significantly upregulated in blood (IFI27, IFITM3, OAS1). This is expected since the interferon response is strongest at the mucosal infection site (nasal epithelium, lungs). In blood, the signal is diluted across all circulating cell types. Nasal swab RNAseq would show much stronger ISG activation.
 
 ### 6. Downregulation dominates across all infections
 
 More genes are downregulated than upregulated in every infection group. This is consistent with the known biology of acute infection: the immune system redirects transcriptional resources toward defense, suppressing baseline functions like ribosomal biogenesis and translation. Ribosomal proteins (RPS24, RPL6, RPL11) were among the most significantly downregulated genes.
 
-### 7. DESeq2 and limma-voom show strong agreement
+### 7. DESeq2 and Limma-voom show agreement
 
-Both methods were run on the same data with the same model formula (`~ batch + gender + age + cohort`). This dual-method approach builds confidence in the findings — genes significant in both are high-confidence hits, while method-specific genes are borderline.
+Both methods were run on the same data with the same model formula (`~ batch + gender + age + cohort`). This dual method approach builds confidence in the findings that genes significant in both are high confidence hits, while method specific genes are borderline.
 
 **Fold change correlation:** Pearson r = 0.81, indicating strong agreement on the direction and magnitude of expression changes. The methods agree on the biology; differences occur at the significance threshold where borderline genes (padj ≈ 0.05) get pushed to different sides of the cutoff by different statistical models.
 
 **Concordance in significance calls:**
 
-| Comparison | DESeq2 | limma-voom | Both | Concordance |
+| Comparison | DESeq2 | Limma-voom | Both | Concordance |
 |---|---|---|---|---|
 | COVID-19 | 2,820 | 2,821 | 1,843 | 48.5% |
 | Influenza | 3,299 | 2,661 | 2,192 | 58.2% |
@@ -76,14 +76,14 @@ Both methods were run on the same data with the same model formula (`~ batch + g
 
 **Key observations:**
 
-- Bacterial has the highest concordance (75.6%) — when the biological signal is strong, both methods agree.
-- COVID-19 has the lowest concordance (48.5%) — many COVID DE genes are borderline, hovering near the significance threshold. The 1,843 genes significant in both methods represent the highest-confidence COVID-19 signature.
+- Bacterial has the highest concordance (75.6%) : when the biological signal is strong, both methods agree.
+- COVID-19 has the lowest concordance (48.5%) : many COVID DE genes are borderline, hovering near the significance threshold. The 1,843 genes significant in both methods represent the highest-confidence COVID-19 signature.
 - Total DE gene counts are remarkably similar between methods (e.g., COVID-19: 2,820 vs 2,821), confirming that overall sensitivity is comparable.
-- Concordance of 48-76% is typical for real clinical datasets. Published benchmarking studies report similar ranges.
+- Published benchmarking studies show that concordance between DE methods varies substantially depending on the dataset, effect size, and sample characteristics (Costa-Silva et al., 2017; Stupnikov et al., 2021). Clean experimental data with strong effects typically shows 80-90%+ overlap, while complex clinical datasets with weaker signals and confounders tend to show lower concordance, consistent with our observations.
 
-**Voom mean-variance trend:** The voom plot shows the expected pattern for well-behaved RNA-seq data — low-count genes (left) cluster with variable variance, while high-count genes (right) show decreasing variance. The smooth red trend line is used by voom to assign precision weights: high-variance genes get lower weights in the linear model, preventing noisy low-count genes from dominating the results. This is analogous to DESeq2's dispersion shrinkage but implemented through a different statistical framework.
+**Voom mean-variance trend:** The voom plot shows the expected pattern for good RNAseq data where low-count genes (left) cluster with variable variance, while high-count genes (right) show decreasing variance. The smooth red trend line is used by voom to assign precision weights: high-variance genes get lower weights in the linear model, preventing noisy low-count genes from dominating the results. This is analogous to DESeq2's dispersion shrinkage but implemented through a different statistical framework.
 
-**Practical recommendation:** For downstream analyses (biomarker selection, pathway analysis), using the intersection of DESeq2 and limma-voom results provides the most robust gene set. For exploratory analysis, either method alone is appropriate.
+**Practical recommendation:** For downstream analyses (biomarker selection, pathway analysis), using the intersection of DESeq2 and Limma-voom results provides the most robust gene set. For exploratory analysis, either method alone is appropriate.
 
 ## Methods
 
@@ -97,7 +97,7 @@ Design formula: ~ batch + gender + age + cohort
 - **Variable of interest:** cohort (infection type vs healthy)
 - Reference level: healthy controls
 - **DESeq2** with apeglm log2 fold change shrinkage
-- **limma-voom** with TMM normalization and empirical Bayes moderation
+- **Limma-voom** with TMM normalization and empirical Bayes moderation
 - Both methods applied with the same design formula for direct comparison
 - Significance threshold: FDR < 0.05
 
@@ -106,8 +106,8 @@ Design formula: ~ batch + gender + age + cohort
 1. Data download from GEO (Python: GEOparse)
 2. Exploratory QC: library size, gene detection, PCA, outlier identification (Python: pandas, scikit-learn)
 3. Differential expression with DESeq2: age-corrected model, apeglm shrinkage (R)
-4. Differential expression with limma-voom: TMM normalization, empirical Bayes (R)
-5. Methods comparison: concordance analysis and fold change correlation between DESeq2 and limma-voom
+4. Differential expression with Limma-voom: TMM normalization, empirical Bayes (R)
+5. Methods comparison: concordance analysis and fold change correlation between DESeq2 and Limma-voom
 6. Visualization: custom volcano plots, UpSet overlap plots (R: ggplot2, ggrepel, UpSetR)
 7. Pathway analysis: GO enrichment of COVID-19 unique and shared infection response genes (R: clusterProfiler)
 
@@ -165,24 +165,27 @@ data/                             # Raw downloads (not tracked by git)
 
 **Python:** NumPy, pandas, matplotlib, seaborn, scikit-learn, GEOparse, SciPy
 
-**R:** DESeq2, apeglm, limma, edgeR, tidyverse, ggplot2, ggrepel, clusterProfiler, org.Hs.eg.db, pheatmap, UpSetR
+**R:** DESeq2, apeglm, Limma, edgeR, tidyverse, ggplot2, ggrepel, clusterProfiler, org.Hs.eg.db, pheatmap, UpSetR
 
 ## How to Reproduce
 
 1. Clone this repository
 2. Download raw data: run `scripts/04_real_geo_data.ipynb` to download from GEO
 3. Run QC and filtering in Python notebooks (01–04)
-4. Run `scripts/05_deseq2_analysis.R` for differential expression and limma-voom analysis (runs both methods and generates comparison)
+4. Run `scripts/05_deseq2_analysis.R` for differential expression and Limma-voom analysis (runs both methods and generates comparison)
 
 ## Limitations
 
-- Severe age imbalance between cohorts (healthy controls are college students). Adjusted for statistically but cannot fully eliminate confounding.
+- Severe age imbalance between cohorts (healthy controls are younger). Adjusted for statistically but cannot fully eliminate confounding.
 - Blood transcriptomics captures systemic immune response, not local infection site biology. Nasal or respiratory samples would show stronger pathogen-specific signatures.
 - Unequal group sizes (COVID-19 n=77 vs Influenza n=17) affect statistical power for some comparisons.
 - 21 CoV other samples excluded due to missing gender data, reducing that group from 60 to 39.
-- DESeq2 vs limma-voom concordance for COVID-19 is 48.5%, meaning roughly half of the significant genes are method-specific. Downstream analyses should consider using the intersection (high-confidence) or union (exploratory) depending on the goal.
+- DESeq2 vs Limma-voom concordance for COVID-19 is 48.5%, meaning roughly half of the significant genes are method specific. Downstream analyses should consider using the intersection (high-confidence) or union (exploratory) depending on the goal.
 
 ## References
 
 McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
+Stupnikov, A. et al. Robustness of differential gene expression analysis of RNA-seq. Computational and Structural Biotechnology Journal 19, 3470-3481 (2021). https://doi.org/10.1016/j.csbj.2021.05.040
+Costa-Silva, J., Domingues, D. & Lopes, F.M. RNA-Seq differential expression analysis: An extended review and a software tool. PLOS ONE 12, e0190152 (2017). https://doi.org/10.1371/journal.pone.0190152
+
 
