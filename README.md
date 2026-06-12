@@ -8,7 +8,7 @@ How does the blood transcriptome differ across respiratory infections (COVID-19,
 
 ## Dataset
 
-**GSE161731** Blood RNA-seq from patients with respiratory infections.
+**GSE161731** : Blood RNA-seq from patients with respiratory infections.
 
 Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
 
@@ -26,7 +26,7 @@ Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcri
 
 ## Disclaimer
 
-This is an independent secondary analysis of publicly available data from GEO (GSE161731) for educational and portfolio purposes. The original study was designed and conducted by McClain et al. (2021). Any interpretations, limitations identified, or analytical choices in this project reflect the author's own learning process and do not represent the views or conclusions of the original investigators. Observations about cohort characteristics (such as age distribution) describe features of the dataset as used in this reanalysis and are not intended as criticism of the original study design.
+This is an independent secondary analysis of publicly available data from GEO (GSE161731) for learning purposes. The original study was designed and conducted by McClain et al. (2021). Any interpretations, limitations identified, or analytical choices in this project reflect the author's own learning process and do not represent the views or conclusions of the original investigators. Observations about cohort characteristics (such as age distribution) describe features of the dataset as used in this reanalysis.
 
 ## Key Findings
 
@@ -45,7 +45,7 @@ Healthy controls in this dataset are young (median 18), while bacterial patients
 
 ### 3. Viral infections share more with each other than with bacterial
 
-COVID-19, Influenza, and CoV other show substantial overlap in DE genes, consistent with shared type I/III interferon responses and antiviral ISG programs. The shared core across all four infections represents a universal host response to respiratory infection — likely general inflammation, stress response, and innate immune activation.
+COVID-19, Influenza, and CoV other show substantial overlap in DE genes, consistent with shared type I/III interferon responses and antiviral ISG programs. The shared core across all four infections represents a universal host response to respiratory infection; likely general inflammation, stress response, and innate immune activation.
 
 ### 4. COVID-19 has a distinct transcriptomic signature
 
