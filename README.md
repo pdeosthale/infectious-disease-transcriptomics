@@ -8,7 +8,7 @@ How does the blood transcriptome differ across respiratory infections (COVID-19,
 
 ## Dataset
 
-**GSE161731** — Blood RNA-seq from patients with respiratory infections.
+**GSE161731** Blood RNA-seq from patients with respiratory infections.
 
 Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
 
@@ -184,8 +184,8 @@ data/                             # Raw downloads (not tracked by git)
 
 ## References
 
-McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
-Stupnikov, A. et al. Robustness of differential gene expression analysis of RNA-seq. Computational and Structural Biotechnology Journal 19, 3470-3481 (2021). https://doi.org/10.1016/j.csbj.2021.05.040
-Costa-Silva, J., Domingues, D. & Lopes, F.M. RNA-Seq differential expression analysis: An extended review and a software tool. PLOS ONE 12, e0190152 (2017). https://doi.org/10.1371/journal.pone.0190152
+- McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
+- Stupnikov, A. et al. Robustness of differential gene expression analysis of RNA-seq. Computational and Structural Biotechnology Journal 19, 3470-3481 (2021). https://doi.org/10.1016/j.csbj.2021.05.040
+- Costa-Silva, J., Domingues, D. & Lopes, F.M. RNA-Seq differential expression analysis: An extended review and a software tool. PLOS ONE 12, e0190152 (2017). https://doi.org/10.1371/journal.pone.0190152
 
 
