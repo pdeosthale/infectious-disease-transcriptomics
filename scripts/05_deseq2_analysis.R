@@ -3,11 +3,25 @@
 # Dataset: GSE161731 — Blood Transcriptomics in Respiratory Infections
 # Cohorts: COVID-19, Influenza, Bacterial, CoV_other, Healthy
 #
+# Author: [Your Name]
 # Date: June 2026
 #
 # This script performs differential expression analysis comparing host 
 # transcriptomic responses across respiratory infections (viral and bacterial)
 # relative to healthy controls using blood RNA-seq data.
+#
+# DESIGN FORMULA: ~ batch + gender + age + cohort
+#
+#   Covariates (adjustment variables — control for, not interested in):
+#     - batch: technical variation from processing on different days
+#     - gender: biological variation in sex-linked gene expression
+#     - age: biological variation (CRITICAL — severe age confounding in this dataset)
+#
+#   Variable of interest (what we are testing):
+#     - cohort: infection type vs healthy controls
+#     - The variable of interest always goes LAST in the DESeq2 formula
+#     - DESeq2 removes the effects of covariates first, then tests whether
+#       cohort still has a significant effect on gene expression
 #
 # Key analytical decisions documented in this script:
 #   1. Removed 21 samples with missing gender data (all from CoV_other cohort)
@@ -17,7 +31,6 @@
 #      - Bacterial patients: median age 60
 #      - Without age correction: 10,564 Bacterial DE genes
 #      - With age correction: 8,436 Bacterial DE genes (~20% were age effects)
-#   4. Final model: ~ batch + gender + age + cohort
 # ==============================================================================
 
 
@@ -34,7 +47,6 @@ library(org.Hs.eg.db)
 library(AnnotationDbi)
 library(clusterProfiler)
 library(UpSetR)
-library(VennDiagram)
 library(ggrepel)
 
 # Set working directory to project root
@@ -80,13 +92,22 @@ cat("Sample order verified: counts columns match metadata rows\n")
 
 
 # ==============================================================================
-# 4. ASSESS COVARIATES AND CONFOUNDING
+# 4. ASSESS ADJUSTMENT VARIABLES AND CONFOUNDING
 # ==============================================================================
+# Before building the DESeq2 model, we check the variables that will be used
+# as covariates (adjustment variables). Covariates are variables that affect
+# gene expression but are NOT what we're studying. We adjust for them so they
+# don't confuse our results about the variable of interest (cohort/infection type).
+#
+# Important distinction:
+#   COVARIATES = batch, gender, age (adjust for these, not interested in them)
+#   VARIABLE OF INTEREST = cohort (this is what we're actually testing)
 
 # --- 4a. Check gender completeness ---
 # 21 samples have missing gender data, all from CoV_other cohort.
-# Decision: Remove these samples to keep gender as a covariate.
+# Decision: Remove these samples to keep gender as an adjustment variable.
 # Rationale: Gender affects immune gene expression (X-linked genes, hormonal effects).
+# If we don't adjust for gender, sex differences could be mistaken for infection effects.
 # CoV_other drops from 60 to 39 samples — still sufficient for analysis.
 
 cat("\nGender completeness:\n")
@@ -101,8 +122,9 @@ cat("After gender filter:", nrow(meta), "samples\n")
 # --- 4b. Check age confounding ---
 # CRITICAL FINDING: Severe age confounding between cohorts.
 # Healthy controls are ~18 years old (college students), while Bacterial
-# patients are ~60 years old. Without age correction, thousands of
+# patients are ~60 years old. Without adjusting for age, thousands of
 # age-related gene expression changes would be falsely attributed to infection.
+# Age MUST be included as an adjustment variable in the model.
 
 cat("\nAge distribution by cohort:\n")
 meta %>%
@@ -119,7 +141,7 @@ meta %>%
 # --- 4c. Check batch confounding ---
 # Batch effects are moderate. Most cohorts are predominantly Batch 1.
 # COVID-19 and CoV_other have the most Batch 2 samples.
-# Batch is included as a covariate in the model.
+# Batch is included as an adjustment variable to remove technical variation.
 
 cat("\nBatch distribution by cohort:\n")
 print(table(meta$cohort, meta$batch))
@@ -171,12 +193,29 @@ cat("Reference level:", levels(meta$cohort)[1], "\n")
 cat("All comparisons will be relative to healthy controls\n")
 
 # Design formula: ~ batch + gender + age + cohort
-# - batch: technical covariate (samples processed on different days)
-# - gender: biological covariate (sex-linked gene expression differences)
-# - age: biological covariate (CRITICAL — severe age confounding between cohorts)
-# - cohort: the variable of interest (goes LAST in the formula)
 #
-# DESeq2 tests for the effect of cohort AFTER accounting for batch, gender, and age.
+# How to read this formula:
+#   "Model gene expression as a function of batch, gender, age, and cohort."
+#
+# COVARIATES (adjustment variables — listed first):
+#   - batch: technical variation from samples processed on different days.
+#            We don't care about batch differences — we want to remove them.
+#   - gender: biological variation in sex-linked gene expression.
+#             We don't care about male vs female differences here — we want 
+#             to remove them so they don't confuse the infection comparison.
+#   - age: biological variation in age-related gene expression.
+#          CRITICAL in this dataset because healthy controls (median 18) are 
+#          much younger than bacterial patients (median 60). Without adjusting 
+#          for age, ~20% of Bacterial DE genes were actually age effects.
+#
+# VARIABLE OF INTEREST (listed last):
+#   - cohort: the infection type. This is what we're actually testing.
+#     DESeq2 first removes the effects of batch, gender, and age, then asks:
+#     "After accounting for all covariates, is there still a significant
+#     difference in gene expression between infection groups and healthy?"
+#
+# The variable of interest MUST go last in the DESeq2 formula.
+# Covariates go before it. Order among covariates does not matter.
 
 dds <- DESeqDataSetFromMatrix(
   countData = counts,
@@ -456,8 +495,15 @@ ggsave("figures/13_de_gene_counts.png", width = 8, height = 6, dpi = 300)
 # versus unique to each infection (pathogen-specific response)
 
 sig_genes <- lapply(all_results, function(res) {
-  res %>% filter(padj < 0.05) %>% pull(SYMBOL) %>% na.omit()
+  genes <- res %>% filter(padj < 0.05) %>% pull(SYMBOL) %>% na.omit()
+  as.character(unique(genes))
 })
+
+# Verify gene lists are populated
+cat("\nDE genes per comparison:\n")
+for (name in names(sig_genes)) {
+  cat("  ", name, ":", length(sig_genes[[name]]), "genes\n")
+}
 
 # Summary of overlaps
 shared_all <- Reduce(intersect, sig_genes)
@@ -475,43 +521,26 @@ for (name in names(sig_genes)) {
 }
 
 # --- UpSet plot ---
-all_genes <- unique(unlist(sig_genes))
-upset_df <- data.frame(row.names = all_genes)
-for (name in names(sig_genes)) {
-  upset_df[[name]] <- as.integer(all_genes %in% sig_genes[[name]])
-}
+# UpSetR requires a data frame where each column is a set (1 = gene is in set, 0 = not)
+# fromList() converts our named list of gene vectors into this format automatically
+
+upset_input <- fromList(sig_genes)
+rownames(upset_input) <- unique(unlist(sig_genes))
 
 png("figures/15_upset_de_genes.png", width = 10, height = 6, units = "in", res = 300)
-upset(upset_df,
+upset(upset_input,
       sets = c("COVID19", "Influenza", "Bacterial", "CoV_other"),
+      keep.order = TRUE,
       order.by = "freq",
       sets.bar.color = c("#e74c3c", "#3498db", "#e67e22", "#9b59b6"),
       main.bar.color = "gray30",
       text.scale = 1.3,
       mainbar.y.label = "Number of Shared DE Genes",
-      sets.x.label = "Total DE Genes")
+      sets.x.label = "Total DE Genes",
+      nsets = 4,
+      nintersects = 15)
 dev.off()
 cat("UpSet plot saved\n")
-
-# --- Venn diagram ---
-venn.diagram(
-  x = sig_genes,
-  category.names = c("COVID-19", "Influenza", "Bacterial", "CoV other"),
-  filename = "figures/14_venn_de_genes.png",
-  output = TRUE,
-  imagetype = "png",
-  height = 2400,
-  width = 2800,
-  resolution = 300,
-  fill = c("#e74c3c", "#3498db", "#e67e22", "#9b59b6"),
-  alpha = 0.4,
-  cex = 1.2,
-  cat.cex = 1.1,
-  margin = 0.1,
-  main = "Shared DE Genes Across Infections vs Healthy (Age-Corrected)",
-  main.cex = 1.3
-)
-cat("Venn diagram saved\n")
 
 
 # ==============================================================================
@@ -566,15 +595,21 @@ ggsave("figures/17_go_shared_infection.png", width = 10, height = 8, dpi = 300)
 # 15. DOCUMENTATION — AGE CONFOUNDING ANALYSIS
 # ==============================================================================
 
-# This section documents the impact of age correction on results.
+# This section documents the impact of including age as an adjustment variable.
 # This analysis was prompted by observing that Bacterial infection showed an
-# unexpectedly large number of DE genes (10,564 without age correction).
+# unexpectedly large number of DE genes (10,564 without age adjustment).
 # Investigation revealed severe age confounding:
 #   - Healthy controls: median age 18
 #   - Bacterial patients: median age 60
 #
+# Without age in the model, DESeq2 cannot distinguish between genes that change
+# because of infection vs genes that change because of aging. By adding age as 
+# a covariate (adjustment variable), DESeq2 first accounts for age-related 
+# expression changes, then tests what remains for infection effects.
+#
 # After adding age to the model, Bacterial DE genes dropped by ~20%,
-# confirming that a substantial fraction of the signal was age-related.
+# confirming that a substantial fraction of the original signal was age-related,
+# not infection-related.
 
 cat("\n=== Age Correction Impact ===\n\n")
 cat("Model without age: ~ batch + gender + cohort\n")
