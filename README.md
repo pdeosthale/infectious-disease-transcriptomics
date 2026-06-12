@@ -143,4 +143,4 @@ data/                             # Raw downloads (not tracked by git)
 
 ## References
 
-Mick et al. (2020). Upper airway gene expression reveals suppressed immune responses to SARS-CoV-2 compared with other respiratory viruses. *Nature Communications*, 11, 5854.
+McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. Nat Commun 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
