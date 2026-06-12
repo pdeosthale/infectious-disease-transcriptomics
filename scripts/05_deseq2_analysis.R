@@ -7,7 +7,7 @@
 #         transcriptional responses to SARS-CoV-2 in the periphery. 
 #         Nature Communications 12, 1079 (2021).
 #         https://doi.org/10.1038/s41467-021-21289-y
-
+#
 # Date: June 2026
 #
 # This script performs an independent secondary analysis of publicly available
@@ -73,6 +73,58 @@ meta <- read.csv("results/GSE161731_metadata_clean.csv")
 
 cat("Raw loaded - Counts:", dim(counts)[1], "genes x", dim(counts)[2], "samples\n")
 cat("Raw loaded - Metadata:", dim(meta)[1], "samples\n")
+
+
+# ==============================================================================
+# QC SUMMARY: ALL FILTERING STEPS APPLIED TO THIS DATASET
+# ==============================================================================
+#
+# This section documents every quality control and filtering step applied,
+# in the order they were performed. Steps 1-2 were done in Python 
+# (04_real_geo_data.ipynb). Steps 3-5 are done in this R script.
+# Step 6 is performed internally by DESeq2.
+#
+# STEP 1 — GENE FILTERING (Python)
+#   Removed genes detected in fewer than 10% of samples.
+#   60,675 → 28,996 genes.
+#   Rationale: Genes with near-zero counts across most samples are 
+#   uninformative and inflate the multiple testing correction burden.
+#   Removing them increases statistical power for the remaining genes.
+#
+# STEP 2 — OUTLIER SAMPLE REMOVAL (Python)
+#   Identified 2 extreme outliers via PCA (PC1 < -400).
+#   Both had very low library size and gene detection:
+#     - Sample 94478 (Bacterial): 9.3M reads vs median 51M, 5,170 genes detected
+#     - Sample 434741 (CoV_other): 1.5M reads vs median 51M, 10,910 genes detected
+#   198 → 196 samples.
+#   Rationale: These samples had insufficient sequencing depth to provide
+#   reliable expression estimates. Including them would add noise.
+#
+# STEP 3 — MISSING GENDER REMOVAL (R, Section 4a)
+#   Removed 21 samples with missing gender data (all from CoV_other cohort).
+#   196 → 175 samples.
+#   Rationale: Gender is included as an adjustment variable in the model.
+#   Samples without gender cannot be used. CoV_other drops from 60 to 39,
+#   which is still sufficient for statistical analysis.
+#
+# STEP 4 — MISSING AGE REMOVAL (R, Section 4d)
+#   Removed samples with NA age values.
+#   Rationale: Age is a critical adjustment variable due to severe age 
+#   confounding between cohorts (healthy median 18, bacterial median 60).
+#
+# STEP 5 — DESeq2 INDEPENDENT FILTERING (automatic, Section 9)
+#   DESeq2 internally filters ~12,832 genes (44%) with very low mean counts
+#   (mean count < 24) from the statistical testing step. These genes have 
+#   insufficient information to detect differential expression and are excluded
+#   to reduce the multiple testing burden. This is done automatically by the 
+#   results() function and does not require user intervention.
+#
+# WHAT WE DID NOT FILTER:
+#   - No adapter or read quality trimming: data from GEO is pre-processed
+#     counts, not raw FASTQ files. Trimming was done by the original authors.
+#   - No library size cutoff: the 2 outlier samples were identified by PCA 
+#     rather than an arbitrary library size threshold.
+#   - No fold change cutoff: documented in Section 9 with rationale.
 
 
 # ==============================================================================
@@ -306,7 +358,7 @@ cat("Mapped", nrow(gene_map), "of", length(ensembl_ids), "Ensembl IDs to gene sy
 # Some analyses use a dual threshold: FDR < 0.05 AND |log2FC| > 1 (2-fold change).
 # We intentionally use FDR < 0.05 only. Here's why:
 #
-# 1. The DESeq2 authors (Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biol. 2014) recommend against hard fold change cutoffs.
+# 1. The DESeq2 authors (Love et al.) recommend against hard fold change cutoffs.
 #    Instead, they recommend apeglm shrinkage (which we use) to produce reliable
 #    fold change estimates, letting biology determine what's meaningful.
 #
@@ -358,6 +410,7 @@ for (comp in comparisons) {
             paste0("results/DE_", comp_name, "_vs_healthy_age_corrected.csv"), 
             row.names = FALSE)
 }
+
 
 # ==============================================================================
 # 10. CHECK KNOWN INTERFERON-STIMULATED GENES (ISGs)
@@ -716,7 +769,7 @@ print(colnames(design))
 # The voom plot shows the mean-variance trend — it should show a
 # decreasing trend (high-count genes have lower relative variance).
 
-png("figures/GSE161731/10a_voom_mean_variance.png", width = 8, height = 6, units = "in", res = 300)
+png("figures/GSE161731/10_voom_mean_variance.png", width = 8, height = 6, units = "in", res = 300)
 v <- voom(dge, design, plot = TRUE)
 dev.off()
 
@@ -826,7 +879,7 @@ p <- ggplot(comparison, aes(x = deseq2_log2FC, y = limma_logFC, color = category
   )
 
 print(p)
-ggsave("figures/GSE161731/10b_deseq2_vs_limma_fc.png", p, width = 8, height = 7, dpi = 300)
+ggsave("figures/GSE161731/11_deseq2_vs_limma_fc.png", p, width = 8, height = 7, dpi = 300)
 
 cat("\nFold change correlation (Pearson r):", round(cor_val, 3), "\n")
 cat("Interpretation: r > 0.8 indicates strong agreement between methods.\n")
