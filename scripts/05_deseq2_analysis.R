@@ -300,6 +300,31 @@ cat("Mapped", nrow(gene_map), "of", length(ensembl_ids), "Ensembl IDs to gene sy
 #
 # Alternatives: "ashr" and "normal" shrinkage are also available in DESeq2.
 # apeglm is recommended by the DESeq2 authors as the default choice.
+#
+# FOLD CHANGE FILTERING: WHY WE DON'T APPLY A LOG2FC CUTOFF
+#
+# Some analyses use a dual threshold: FDR < 0.05 AND |log2FC| > 1 (2-fold change).
+# We intentionally use FDR < 0.05 only. Here's why:
+#
+# 1. The DESeq2 authors (Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biol. 2014) recommend against hard fold change cutoffs.
+#    Instead, they recommend apeglm shrinkage (which we use) to produce reliable
+#    fold change estimates, letting biology determine what's meaningful.
+#
+# 2. A hard |log2FC| > 1 cutoff discards genes with small but biologically important
+#    effects. Transcription factors and signaling molecules often show modest fold
+#    changes (e.g., log2FC = 0.5) but have large downstream impact.
+#
+# 3. With 175 samples, we have high statistical power, meaning we can detect small
+#    but real expression changes. These are genuinely significant — not artifacts.
+#
+# 4. DESeq2 provides a statistically proper alternative: results(dds, lfcThreshold = 0.5)
+#    which tests whether a gene's fold change is SIGNIFICANTLY greater than a threshold,
+#    rather than just filtering post-hoc. We do not use this here but it is available
+#    for analyses where a minimum effect size is biologically required.
+#
+# 5. The volcano plots display dashed lines at |log2FC| = 1 for visual reference,
+#    allowing readers to see which significant genes also have large effect sizes.
+#    This provides context without discarding data.
 
 comparisons <- c("cohort_COVID19_vs_healthy", 
                  "cohort_Influenza_vs_healthy",
@@ -333,7 +358,6 @@ for (comp in comparisons) {
             paste0("results/DE_", comp_name, "_vs_healthy_age_corrected.csv"), 
             row.names = FALSE)
 }
-
 
 # ==============================================================================
 # 10. CHECK KNOWN INTERFERON-STIMULATED GENES (ISGs)
