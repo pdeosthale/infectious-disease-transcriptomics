@@ -1,5 +1,3 @@
-# infectious-disease-transcriptomics
-Computational analysis of host-pathogen interactions using public transcriptomic datasets
 # Infectious Disease Transcriptomics
 
 Computational analysis of host immune responses to respiratory infections using public blood transcriptomic data. This project applies differential expression analysis to characterize pathogen-specific and shared transcriptomic signatures across viral and bacterial respiratory infections.
@@ -10,7 +8,9 @@ How does the blood transcriptome differ across respiratory infections (COVID-19,
 
 ## Dataset
 
-**GSE161731** — Blood RNA-seq from patients with respiratory infections, published in *Nature Communications*.
+**GSE161731** — Blood RNA-seq from patients with respiratory infections.
+
+Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
 
 | Cohort | Samples (after QC) | Median Age |
 |--------|-------------------|------------|
@@ -23,6 +23,10 @@ How does the blood transcriptome differ across respiratory infections (COVID-19,
 - 28,996 genes after filtering (detected in ≥10% of samples)
 - 2 outlier samples removed during QC (low library size and gene detection)
 - 21 samples removed due to missing gender data (all from CoV other cohort)
+
+## Disclaimer
+
+This is an independent secondary analysis of publicly available data from GEO (GSE161731) for educational purposes. The original study was designed and conducted by McClain et al. (2021). Any interpretations, limitations identified, or analytical choices in this project reflect the author's own learning process and do not represent the views or conclusions of the original investigators. Observations about cohort characteristics (such as age distribution) describe features of the dataset as used in this reanalysis.
 
 ## Key Findings
 
@@ -143,4 +147,4 @@ data/                             # Raw downloads (not tracked by git)
 
 ## References
 
-McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. Nat Commun 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
+McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y

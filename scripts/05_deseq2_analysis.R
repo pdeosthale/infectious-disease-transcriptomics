@@ -3,8 +3,16 @@
 # Dataset: GSE161731 — Blood Transcriptomics in Respiratory Infections
 # Cohorts: COVID-19, Influenza, Bacterial, CoV_other, Healthy
 #
-# Author: [Your Name]
+# Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated 
+#         transcriptional responses to SARS-CoV-2 in the periphery. 
+#         Nature Communications 12, 1079 (2021).
+#         https://doi.org/10.1038/s41467-021-21289-y
+#
 # Date: June 2026
+#
+# This script performs an independent secondary analysis of publicly available
+# data from GEO. Interpretations and analytical choices reflect the author's
+# own analysis and do not represent the views of the original investigators.
 #
 # This script performs differential expression analysis comparing host 
 # transcriptomic responses across respiratory infections (viral and bacterial)
