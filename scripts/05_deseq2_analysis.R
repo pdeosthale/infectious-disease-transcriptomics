@@ -450,10 +450,10 @@ make_volcano <- function(res_df, comparison_name, filename) {
 }
 
 # Generate volcano plots for all four comparisons
-make_volcano(all_results$COVID19, "COVID-19", "figures/12a_volcano_covid_vs_healthy.png")
-make_volcano(all_results$Influenza, "Influenza", "figures/12b_volcano_influenza_vs_healthy.png")
-make_volcano(all_results$Bacterial, "Bacterial", "figures/12c_volcano_bacterial_vs_healthy.png")
-make_volcano(all_results$CoV_other, "CoV Other", "figures/12d_volcano_cov_other_vs_healthy.png")
+make_volcano(all_results$COVID19, "COVID-19", "figures/GSE161731/05a_volcano_covid_vs_healthy.png")
+make_volcano(all_results$Influenza, "Influenza", "figures/GSE161731/05b_volcano_influenza_vs_healthy.png")
+make_volcano(all_results$Bacterial, "Bacterial", "figures/GSE161731/05c_volcano_bacterial_vs_healthy.png")
+make_volcano(all_results$CoV_other, "CoV Other", "figures/GSE161731/05d_volcano_cov_other_vs_healthy.png")
 
 
 # ==============================================================================
@@ -484,7 +484,7 @@ ggplot(summary_df, aes(x = comparison, y = count, fill = direction)) +
   theme_minimal(base_size = 13) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave("figures/13_de_gene_counts.png", width = 8, height = 6, dpi = 300)
+ggsave("figures/GSE161731/06_de_gene_counts.png", width = 8, height = 6, dpi = 300)
 
 
 # ==============================================================================
@@ -527,7 +527,7 @@ for (name in names(sig_genes)) {
 upset_input <- fromList(sig_genes)
 rownames(upset_input) <- unique(unlist(sig_genes))
 
-png("figures/15_upset_de_genes.png", width = 10, height = 6, units = "in", res = 300)
+png("figures/GSE161731/07_upset_de_genes.png", width = 10, height = 6, units = "in", res = 300)
 upset(upset_input,
       sets = c("COVID19", "Influenza", "Bacterial", "CoV_other"),
       keep.order = TRUE,
@@ -568,7 +568,7 @@ cat("COVID-19 unique: significant GO terms:", nrow(go_covid), "\n")
 
 dotplot(go_covid, showCategory = 15, title = "COVID-19 Unique Genes: GO Biological Process") +
   theme(axis.text.y = element_text(size = 9))
-ggsave("figures/16_go_covid_unique.png", width = 10, height = 8, dpi = 300)
+ggsave("figures/GSE161731/08_go_covid_unique.png", width = 10, height = 8, dpi = 300)
 
 # --- 14b. Shared infection response genes ---
 # Genes DE in ALL four infections — universal host response to respiratory infection
@@ -588,7 +588,7 @@ cat("Shared infection response: significant GO terms:", nrow(go_shared), "\n")
 
 dotplot(go_shared, showCategory = 15, title = "Shared Infection Response (All 4 Groups): GO Biological Process") +
   theme(axis.text.y = element_text(size = 9))
-ggsave("figures/17_go_shared_infection.png", width = 10, height = 8, dpi = 300)
+ggsave("figures/GSE161731/09_go_shared_infection.png", width = 10, height = 8, dpi = 300)
 
 
 # ==============================================================================
