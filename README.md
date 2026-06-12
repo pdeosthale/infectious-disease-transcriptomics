@@ -26,7 +26,7 @@ Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcri
 
 ## Disclaimer
 
-This is an independent secondary analysis of publicly available data from GEO (GSE161731) for educational purposes. The original study was designed and conducted by McClain et al. (2021). Any interpretations, limitations identified, or analytical choices in this project reflect the author's own learning process and do not represent the views or conclusions of the original investigators. Observations about cohort characteristics (such as age distribution) describe features of the dataset as used in this reanalysis.
+This is an independent secondary analysis of publicly available data from GEO (GSE161731) for educational and portfolio purposes. The original study was designed and conducted by McClain et al. (2021). Any interpretations, limitations identified, or analytical choices in this project reflect the author's own learning process and do not represent the views or conclusions of the original investigators. Observations about cohort characteristics (such as age distribution) describe features of the dataset as used in this reanalysis and are not intended as criticism of the original study design.
 
 ## Key Findings
 
@@ -59,6 +59,32 @@ Only 3 of 12 classic interferon-stimulated genes (ISGs) were significantly upreg
 
 More genes are downregulated than upregulated in every infection group. This is consistent with the known biology of acute infection: the immune system redirects transcriptional resources toward defense, suppressing baseline functions like ribosomal biogenesis and translation. Ribosomal proteins (RPS24, RPL6, RPL11) were among the most significantly downregulated genes.
 
+### 7. DESeq2 and limma-voom show strong agreement
+
+Both methods were run on the same data with the same model formula (`~ batch + gender + age + cohort`). This dual-method approach builds confidence in the findings — genes significant in both are high-confidence hits, while method-specific genes are borderline.
+
+**Fold change correlation:** Pearson r = 0.81, indicating strong agreement on the direction and magnitude of expression changes. The methods agree on the biology; differences occur at the significance threshold where borderline genes (padj ≈ 0.05) get pushed to different sides of the cutoff by different statistical models.
+
+**Concordance in significance calls:**
+
+| Comparison | DESeq2 | limma-voom | Both | Concordance |
+|---|---|---|---|---|
+| COVID-19 | 2,820 | 2,821 | 1,843 | 48.5% |
+| Influenza | 3,299 | 2,661 | 2,192 | 58.2% |
+| Bacterial | 8,436 | 8,253 | 7,187 | 75.6% |
+| CoV other | 2,946 | 2,746 | 2,088 | 57.9% |
+
+**Key observations:**
+
+- Bacterial has the highest concordance (75.6%) — when the biological signal is strong, both methods agree.
+- COVID-19 has the lowest concordance (48.5%) — many COVID DE genes are borderline, hovering near the significance threshold. The 1,843 genes significant in both methods represent the highest-confidence COVID-19 signature.
+- Total DE gene counts are remarkably similar between methods (e.g., COVID-19: 2,820 vs 2,821), confirming that overall sensitivity is comparable.
+- Concordance of 48-76% is typical for real clinical datasets. Published benchmarking studies report similar ranges.
+
+**Voom mean-variance trend:** The voom plot shows the expected pattern for well-behaved RNA-seq data — low-count genes (left) cluster with variable variance, while high-count genes (right) show decreasing variance. The smooth red trend line is used by voom to assign precision weights: high-variance genes get lower weights in the linear model, preventing noisy low-count genes from dominating the results. This is analogous to DESeq2's dispersion shrinkage but implemented through a different statistical framework.
+
+**Practical recommendation:** For downstream analyses (biomarker selection, pathway analysis), using the intersection of DESeq2 and limma-voom results provides the most robust gene set. For exploratory analysis, either method alone is appropriate.
+
 ## Methods
 
 ### Statistical Model
@@ -70,16 +96,20 @@ Design formula: ~ batch + gender + age + cohort
 - **Covariates (adjustment variables):** batch (technical), gender (biological), age (biological)
 - **Variable of interest:** cohort (infection type vs healthy)
 - Reference level: healthy controls
-- DESeq2 with apeglm log2 fold change shrinkage
+- **DESeq2** with apeglm log2 fold change shrinkage
+- **limma-voom** with TMM normalization and empirical Bayes moderation
+- Both methods applied with the same design formula for direct comparison
 - Significance threshold: FDR < 0.05
 
 ### Analysis Pipeline
 
 1. Data download from GEO (Python: GEOparse)
 2. Exploratory QC: library size, gene detection, PCA, outlier identification (Python: pandas, scikit-learn)
-3. Differential expression: DESeq2 with age-corrected model (R)
-4. Visualization: custom volcano plots, UpSet overlap plots (R: ggplot2, ggrepel, UpSetR)
-5. Pathway analysis: GO enrichment of COVID-19 unique and shared infection response genes (R: clusterProfiler)
+3. Differential expression with DESeq2: age-corrected model, apeglm shrinkage (R)
+4. Differential expression with limma-voom: TMM normalization, empirical Bayes (R)
+5. Methods comparison: concordance analysis and fold change correlation between DESeq2 and limma-voom
+6. Visualization: custom volcano plots, UpSet overlap plots (R: ggplot2, ggrepel, UpSetR)
+7. Pathway analysis: GO enrichment of COVID-19 unique and shared infection response genes (R: clusterProfiler)
 
 ## Project Structure
 
@@ -112,7 +142,9 @@ figures/
     ├── 06_de_gene_counts.png
     ├── 07_upset_de_genes.png
     ├── 08_go_covid_unique.png
-    └── 09_go_shared_infection.png
+    ├── 09_go_shared_infection.png
+    ├── 10_voom_mean_variance.png
+    └── 11_deseq2_vs_limma_fc.png
 
 results/                          # Processed data and DE results
 ├── GSE161731_counts_filtered.csv
@@ -120,7 +152,11 @@ results/                          # Processed data and DE results
 ├── DE_COVID19_vs_healthy_age_corrected.csv
 ├── DE_Influenza_vs_healthy_age_corrected.csv
 ├── DE_Bacterial_vs_healthy_age_corrected.csv
-└── DE_CoV_other_vs_healthy_age_corrected.csv
+├── DE_CoV_other_vs_healthy_age_corrected.csv
+├── DE_limma_COVID19_vs_healthy.csv
+├── DE_limma_Influenza_vs_healthy.csv
+├── DE_limma_Bacterial_vs_healthy.csv
+└── DE_limma_CoV_other_vs_healthy.csv
 
 data/                             # Raw downloads (not tracked by git)
 ```
@@ -129,14 +165,14 @@ data/                             # Raw downloads (not tracked by git)
 
 **Python:** NumPy, pandas, matplotlib, seaborn, scikit-learn, GEOparse, SciPy
 
-**R:** DESeq2, apeglm, limma, tidyverse, ggplot2, ggrepel, clusterProfiler, org.Hs.eg.db, pheatmap, UpSetR
+**R:** DESeq2, apeglm, limma, edgeR, tidyverse, ggplot2, ggrepel, clusterProfiler, org.Hs.eg.db, pheatmap, UpSetR
 
 ## How to Reproduce
 
 1. Clone this repository
 2. Download raw data: run `scripts/04_real_geo_data.ipynb` to download from GEO
 3. Run QC and filtering in Python notebooks (01–04)
-4. Run `scripts/05_deseq2_analysis.R` for differential expression analysis
+4. Run `scripts/05_deseq2_analysis.R` for differential expression and limma-voom analysis (runs both methods and generates comparison)
 
 ## Limitations
 
@@ -144,7 +180,9 @@ data/                             # Raw downloads (not tracked by git)
 - Blood transcriptomics captures systemic immune response, not local infection site biology. Nasal or respiratory samples would show stronger pathogen-specific signatures.
 - Unequal group sizes (COVID-19 n=77 vs Influenza n=17) affect statistical power for some comparisons.
 - 21 CoV other samples excluded due to missing gender data, reducing that group from 60 to 39.
+- DESeq2 vs limma-voom concordance for COVID-19 is 48.5%, meaning roughly half of the significant genes are method-specific. Downstream analyses should consider using the intersection (high-confidence) or union (exploratory) depending on the goal.
 
 ## References
 
 McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
+

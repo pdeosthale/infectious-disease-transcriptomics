@@ -7,7 +7,7 @@
 #         transcriptional responses to SARS-CoV-2 in the periphery. 
 #         Nature Communications 12, 1079 (2021).
 #         https://doi.org/10.1038/s41467-021-21289-y
-#
+
 # Date: June 2026
 #
 # This script performs an independent secondary analysis of publicly available
@@ -631,7 +631,186 @@ cat("The age-corrected model is used for all final results.\n")
 
 
 # ==============================================================================
-# 16. SESSION INFO
+# 16. LIMMA-VOOM PARALLEL ANALYSIS
+# ==============================================================================
+
+# limma-voom is an alternative to DESeq2 for differential expression.
+#
+# KEY DIFFERENCES:
+#   DESeq2: models raw counts directly using a negative binomial distribution.
+#   limma-voom: transforms counts using a precision-weighted approach, then
+#   applies limma's linear modeling framework (originally built for microarrays).
+#
+# WHEN TO USE WHICH:
+#   - DESeq2: great for small sample sizes (3-5 per group), more conservative
+#   - limma-voom: excels with complex designs (interactions, blocking, many factors),
+#     faster with large sample sizes, more flexible model specification
+#   - Both give similar results for straightforward comparisons
+#   - Running both and comparing builds confidence in your findings
+#
+# WHY COMPARE: Genes significant in BOTH methods are high-confidence hits.
+# Genes significant in only one method may be borderline or method-sensitive.
+
+library(limma)
+library(edgeR)
+
+# --- 16a. Create DGEList object ---
+# edgeR's DGEList is the input format for limma-voom
+# We use the same filtered counts and metadata as DESeq2
+
+dge <- DGEList(counts = counts, group = meta$cohort)
+
+# Calculate normalization factors (TMM method)
+# TMM = Trimmed Mean of M-values, similar purpose to DESeq2's size factors
+dge <- calcNormFactors(dge, method = "TMM")
+
+cat("Normalization factors (first 5 samples):\n")
+print(head(dge$samples))
+
+# --- 16b. Build design matrix ---
+# In limma, the design matrix is explicit (unlike DESeq2's formula interface)
+# model.matrix() converts the formula into a numeric matrix of 0s and 1s
+#
+# This is the SAME model as DESeq2: ~ batch + gender + age + cohort
+# Covariates (adjustment variables): batch, gender, age
+# Variable of interest: cohort
+
+design <- model.matrix(~ batch + gender + age + cohort, data = meta)
+
+cat("Design matrix columns:\n")
+print(colnames(design))
+
+# --- 16c. voom transformation ---
+# voom estimates the mean-variance relationship of the log-counts,
+# then assigns a precision weight to each observation.
+#
+# Genes with high variance get lower weights (less influence on the model).
+# This accounts for the fact that RNA-seq count data is heteroscedastic
+# (variance depends on the mean), which violates the assumptions of
+# standard linear models.
+#
+# The voom plot shows the mean-variance trend — it should show a
+# decreasing trend (high-count genes have lower relative variance).
+
+png("figures/GSE161731/10a_voom_mean_variance.png", width = 8, height = 6, units = "in", res = 300)
+v <- voom(dge, design, plot = TRUE)
+dev.off()
+
+v <- voom(dge, design, plot = TRUE)
+cat("voom transformation complete\n")
+
+# --- 16d. Fit linear model ---
+# lmFit fits a linear model for each gene using the precision weights from voom.
+# eBayes applies empirical Bayes moderation — it borrows information across genes
+# to produce more stable variance estimates (similar concept to DESeq2's dispersion
+# shrinkage, but implemented differently).
+
+fit <- lmFit(v, design)
+fit <- eBayes(fit)
+
+cat("Model coefficients available:\n")
+print(colnames(fit$coefficients))
+
+# --- 16e. Extract results for all comparisons ---
+limma_all_results <- list()
+
+for (coef_name in c("cohortCOVID19", "cohortInfluenza", "cohortBacterial", "cohortCoV_other")) {
+  res <- topTable(fit, coef = coef_name, number = Inf, sort.by = "none")
+  res$ENSEMBL <- rownames(res)
+  res <- res %>% left_join(gene_map, by = "ENSEMBL") %>% filter(!is.na(adj.P.Val))
+  
+  comp_name <- gsub("cohort", "", coef_name)
+  limma_all_results[[comp_name]] <- res
+  
+  n_sig <- sum(res$adj.P.Val < 0.05)
+  n_up <- sum(res$adj.P.Val < 0.05 & res$logFC > 0)
+  n_down <- sum(res$adj.P.Val < 0.05 & res$logFC < 0)
+  cat(comp_name, ": ", n_sig, " significant (", n_up, " up, ", n_down, " down)\n", sep = "")
+  
+  # Save to CSV
+  write.csv(res, paste0("results/DE_limma_", comp_name, "_vs_healthy.csv"), row.names = FALSE)
+}
+
+
+# ==============================================================================
+# 17. DESeq2 vs LIMMA-VOOM COMPARISON
+# ==============================================================================
+
+# Compare significance calls and fold changes between the two methods.
+# High concordance = robust findings. Low concordance = borderline genes near
+# the significance threshold that different statistical models handle differently.
+
+# --- 17a. Concordance table across all comparisons ---
+cat("\n=== Method Comparison Across All Comparisons ===\n\n")
+cat("Comparison        | DESeq2  | limma   | Both    | Concordance\n")
+cat("------------------+---------+---------+---------+------------\n")
+
+deseq_names <- c("COVID19", "Influenza", "Bacterial", "CoV_other")
+
+for (name in deseq_names) {
+  d_sig <- all_results[[name]] %>% filter(padj < 0.05) %>% pull(ENSEMBL)
+  l_sig <- limma_all_results[[name]] %>% filter(adj.P.Val < 0.05) %>% pull(ENSEMBL)
+  both_sig <- intersect(d_sig, l_sig)
+  concordance <- round(length(both_sig) / length(union(d_sig, l_sig)) * 100, 1)
+  
+  cat(sprintf("%-18s| %7d | %7d | %7d | %5.1f%%\n",
+              name, length(d_sig), length(l_sig), length(both_sig), concordance))
+}
+
+# --- 17b. Fold change correlation plot (COVID19) ---
+# Compare the actual fold change values between methods.
+# High correlation = methods agree on direction and magnitude of change,
+# even if they disagree on the significance cutoff.
+
+comparison <- all_results$COVID19 %>%
+  dplyr::select(ENSEMBL, SYMBOL, deseq2_log2FC = log2FoldChange, deseq2_padj = padj) %>%
+  inner_join(
+    limma_all_results$COVID19 %>% dplyr::select(ENSEMBL, limma_logFC = logFC, limma_fdr = adj.P.Val),
+    by = "ENSEMBL"
+  )
+
+cor_val <- cor(comparison$deseq2_log2FC, comparison$limma_logFC, use = "complete.obs")
+
+comparison$category <- case_when(
+  comparison$deseq2_padj < 0.05 & comparison$limma_fdr < 0.05 ~ "Both significant",
+  comparison$deseq2_padj < 0.05 ~ "DESeq2 only",
+  comparison$limma_fdr < 0.05 ~ "limma only",
+  TRUE ~ "Neither"
+)
+
+p <- ggplot(comparison, aes(x = deseq2_log2FC, y = limma_logFC, color = category)) +
+  geom_point(size = 0.8, alpha = 0.5) +
+  scale_color_manual(
+    values = c("Both significant" = "#8E44AD", "DESeq2 only" = "#E67E22",
+               "limma only" = "#5DADE2", "Neither" = "#BFBFBF"),
+    name = ""
+  ) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black", linewidth = 0.5) +
+  labs(
+    title = "DESeq2 vs limma-voom: Fold Change Comparison",
+    subtitle = paste0("COVID-19 vs Healthy | Pearson r = ", round(cor_val, 3)),
+    x = expression(bold(DESeq2 ~ log[2] ~ "Fold Change")),
+    y = expression(bold(limma-voom ~ log[2] ~ "Fold Change"))
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.position = "top",
+    legend.text = element_text(size = 11, face = "bold"),
+    plot.title = element_text(face = "bold", size = 14),
+    axis.title = element_text(face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+print(p)
+ggsave("figures/GSE161731/10b_deseq2_vs_limma_fc.png", p, width = 8, height = 7, dpi = 300)
+
+cat("\nFold change correlation (Pearson r):", round(cor_val, 3), "\n")
+cat("Interpretation: r > 0.8 indicates strong agreement between methods.\n")
+cat("The methods agree on the biology; differences are at the significance threshold.\n")
+
+
+# ==============================================================================
+# 18. SESSION INFO
 # ==============================================================================
 
 cat("\n=== Session Info ===\n")
@@ -639,5 +818,7 @@ cat("Date:", format(Sys.time(), "%Y-%m-%d %H:%M"), "\n")
 cat("R version:", R.version.string, "\n")
 cat("DESeq2:", as.character(packageVersion("DESeq2")), "\n")
 cat("apeglm:", as.character(packageVersion("apeglm")), "\n")
+cat("limma:", as.character(packageVersion("limma")), "\n")
+cat("edgeR:", as.character(packageVersion("edgeR")), "\n")
 cat("clusterProfiler:", as.character(packageVersion("clusterProfiler")), "\n")
 sessionInfo()
