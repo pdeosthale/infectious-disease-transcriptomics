@@ -131,8 +131,8 @@ Design formula: ~ batch + gender + age + cohort
 
 ```
 scripts/
-├── 04_real_geo_data.ipynb
-└── 05_deseq2_analysis.R
+├── 01_data_download_qc.ipynb
+└── 02_deseq2_limma_analysis.R
 
 figures/
 └── GSE161731/
@@ -185,8 +185,8 @@ data/                    # Raw downloads (not tracked by git)
 ## How to Reproduce
 
 1. Clone this repository
-2. Download raw data: run `scripts/04_real_geo_data.ipynb` to download GSE161731 from GEO
-3. Run `scripts/05_deseq2_analysis.R` for all differential expression, GSEA, and visualization
+2. Download raw data: run `scripts/01_data_download_qc.ipynb` to download GSE161731 from GEO and perform QC
+3. Run `scripts/02_deseq2_limma_analysis.R` for all differential expression, GSEA, and visualization
 
 ## Limitations
 
