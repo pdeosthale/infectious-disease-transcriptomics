@@ -79,15 +79,9 @@ Both methods were run on the same independent samples with the same design formu
 
 **Gene-level (significance concordance):** Ranges from 48-76% depending on comparison; lower concordance reflects borderline genes near the significance threshold, not biological disagreement.
 
-**Pathway-level (GSEA Reactome concordance):** Substantially higher for most comparisons, confirming that even when methods disagree on individual borderline genes, they converge on the same biological processes.
+**Pathway-level (GSEA Reactome concordance):** Higher than gene-level concordance for Influenza, Bacterial, and CoV_other, confirming that both methods converge on the same biological processes even when disagreeing on borderline genes. COVID-19 is an exception 
 
-Comparison        | Gene concordance | Pathway concordance  
-------------------+------------------+---------+--------------+
-|---|---|---|---|---|
-COVID19           |     ~55%          |        36.4%         |    
-Influenza         |     ~58%          |        74.3%         |   
-Bacterial         |     ~75%          |        73.2%         |    
-CoV_other         |     ~58%          |        73.4%         | 
+ComparisonGene concordancePathway concordanceCOVID-19~55%36.4%*Influenza~58%74.3%Bacterial~75%73.2%CoV other~58%73.4%
 
 COVID-19 shows lower pathway concordance (36.4%) than the other infections, likely due to reduced statistical power after restricting to independent samples (n=45, 874 DE genes). With fewer genes, GSEA ranked lists from the two methods diverge more in the lower-signal region.
 
