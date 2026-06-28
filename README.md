@@ -81,9 +81,9 @@ Both methods were run on the same independent samples with the same design formu
 
 **Pathway-level (GSEA Reactome concordance):** Higher than gene-level concordance for Influenza, Bacterial, and CoV_other, confirming that both methods converge on the same biological processes even when disagreeing on borderline genes. COVID-19 is an exception 
 
-ComparisonGene concordancePathway concordanceCOVID-19~55%36.4%*Influenza~58%74.3%Bacterial~75%73.2%CoV other~58%73.4%
+ComparisonGene concordancePathway concordanceCOVID-19≈55%36.4%*Influenza≈58%74.3%Bacterial≈75%73.2%CoV other≈58%73.4%
 
-COVID-19 shows lower pathway concordance (36.4%) than the other infections, likely due to reduced statistical power after restricting to independent samples (n=45, 874 DE genes). With fewer genes, GSEA ranked lists from the two methods diverge more in the lower-signal region.
+*COVID-19 pathway concordance is lower than gene concordance due to asymmetric pathway detection (DESeq2: 143 pathways, limma-voom: 322 pathways). Reduced statistical power after one-sample-per-subject restriction (n=45, 874 DE genes) likely contributes with fewer DE genes, small differences in gene ranking push different pathways across the significance threshold.
 
 **Key conclusion:**  For three of four comparisons (Influenza, Bacterial, CoV_other), both methods identify the same biological pathways as significantly enriched. COVID-19 is an exception where reduced sample size after one-sample-per-subject restriction limits pathway-level concordance.
 
