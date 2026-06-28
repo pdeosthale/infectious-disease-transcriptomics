@@ -83,6 +83,7 @@ Both methods were run on the same independent samples with the same design formu
 
 Comparison        | Gene concordance | Pathway concordance  
 ------------------+------------------+---------+--------------+
+|---|---|---|---|---|
 COVID19           |     ~55%          |        36.4%         |    
 Influenza         |     ~58%          |        74.3%         |   
 Bacterial         |     ~75%          |        73.2%         |    
