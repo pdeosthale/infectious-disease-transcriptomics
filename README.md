@@ -82,7 +82,7 @@ Gene-level (significance concordance): Ranges from 48-76% depending on compariso
 Pathway-level (GSEA Reactome concordance): Substantially higher for most comparisons, confirming that even when methods disagree on individual borderline genes, they converge on the same biological processes.
 
 Comparison        | Gene concordance | Pathway concordance  
-------------------+------------------+---------+----------
+------------------+------------------+---------+------------
 COVID19           |     143          |        322         |    
 Influenza         |     325          |        334         |   
 Bacterial         |     405          |        527         |    
@@ -133,14 +133,14 @@ Design formula: ~ batch + gender + age + cohort
 
 ## Project Structure
 
-scripts/
+- scripts/
 ├── 01_python_foundations.ipynb
 ├── 02_python_programming.ipynb
 ├── 03_numpy_and_data_wrangling.ipynb
 ├── 04_real_geo_data.ipynb
 └── 05_deseq2_analysis.R
 
-figures/
+- figures/
 ├── practice/                     # Learning exercises with simulated data
 └── GSE161731/                    # Publication-quality figures from real data
     ├── 01_cohort_overview.png
@@ -162,7 +162,7 @@ figures/
     └── 10a_voom_mean_variance.png
     └── 10b_deseq2_vs_limma_fc.png
 
-results/
+- results/
 ├── GSE161731_counts_filtered.csv
 ├── GSE161731_metadata_clean.csv
 ├── DE_deseq2_COVID19_vs_healthy.csv
@@ -182,15 +182,14 @@ results/
 ├── GSEA_limma_Bacterial_vs_healthy.csv
 └── GSEA_limma_CoV_other_vs_healthy.csv
 
-data/                             
-# Raw downloads (not tracked by git)
+- data/ Raw downloads (not tracked by git)
 
 ### Tools
 
 Python: NumPy, pandas, matplotlib, seaborn, scikit-learn, GEOparse, SciPy
 R: DESeq2, apeglm, limma, edgeR, tidyverse, ggplot2, ggrepel, ReactomePA, clusterProfiler, org.Hs.eg.db, pheatmap, RColorBrewer, UpSetR, patchwork
 
-## How to Reproduce
+### How to Reproduce
 
 - Clone this repository
 - Download raw data: run scripts/04_real_geo_data.ipynb to download GSE161731 from GEO
@@ -198,7 +197,7 @@ R: DESeq2, apeglm, limma, edgeR, tidyverse, ggplot2, ggrepel, ReactomePA, cluste
 - Run scripts/05_deseq2_analysis.R for all differential expression, GSEA, and visualization
 
 
-## Limitations
+### Limitations
 
 - Multi-cohort age variation: Age varies systematically across cohorts due to different recruitment sources (university students vs emergency department patients). We include age as an adjustment variable, but residual confounding cannot be fully excluded in a cross-cohort observational design.
 - Blood transcriptomics: Captures systemic immune response, not local infection site biology. Nasal or respiratory samples would show stronger pathogen-specific signatures, particularly for interferon-stimulated genes.
