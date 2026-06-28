@@ -75,28 +75,28 @@ GSEA Reactome identified suppression of Eukaryotic Translation Elongation, Pepti
 
 Both methods were run on the same independent samples with the same design formula. The comparison operates at two levels:
 
-Gene-level (fold change correlation): Pearson r = 0.81, indicating strong agreement on direction and magnitude of individual gene expression changes.
+**Gene-level (fold change correlation):** Pearson r = 0.81, indicating strong agreement on direction and magnitude of individual gene expression changes.
 
-Gene-level (significance concordance): Ranges from 48-76% depending on comparison; lower concordance reflects borderline genes near the significance threshold, not biological disagreement.
+**Gene-level (significance concordance):** Ranges from 48-76% depending on comparison; lower concordance reflects borderline genes near the significance threshold, not biological disagreement.
 
-Pathway-level (GSEA Reactome concordance): Substantially higher for most comparisons, confirming that even when methods disagree on individual borderline genes, they converge on the same biological processes.
+**Pathway-level (GSEA Reactome concordance):** Substantially higher for most comparisons, confirming that even when methods disagree on individual borderline genes, they converge on the same biological processes.
 
 Comparison        | Gene concordance | Pathway concordance  
-------------------+------------------+---------+------------
-COVID19           |     143          |        322         |    
-Influenza         |     325          |        334         |   
-Bacterial         |     405          |        527         |    
-CoV_other         |     529          |        565         | 
+------------------+------------------+---------+--------------+
+COVID19           |     ~55%          |        36.4%         |    
+Influenza         |     ~58%          |        74.3%         |   
+Bacterial         |     ~75%          |        73.2%         |    
+CoV_other         |     ~58%          |        73.4%         | 
 
 COVID-19 shows lower pathway concordance (36.4%) than the other infections, likely due to reduced statistical power after restricting to independent samples (n=45, 874 DE genes). With fewer genes, GSEA ranked lists from the two methods diverge more in the lower-signal region.
 
-Key conclusion: For three of four comparisons (Influenza, Bacterial, CoV_other), both methods identify the same biological pathways as significantly enriched. COVID-19 is an exception where reduced sample size after one-sample-per-subject restriction limits pathway-level concordance.
+**Key conclusion:**  For three of four comparisons (Influenza, Bacterial, CoV_other), both methods identify the same biological pathways as significantly enriched. COVID-19 is an exception where reduced sample size after one-sample-per-subject restriction limits pathway-level concordance.
 
 **Voom mean-variance trend:** The voom plot shows the expected pattern for good RNAseq data where low-count genes (left) cluster with variable variance, while high-count genes (right) show decreasing variance. The smooth red trend line is used by voom to assign precision weights: high-variance genes get lower weights in the linear model, preventing noisy low-count genes from dominating the results. This is analogous to DESeq2's dispersion shrinkage but implemented through a different statistical framework.
 
 **Practical recommendation:** For downstream analyses (biomarker selection, pathway analysis), using the intersection of DESeq2 and Limma-voom results provides the most robust gene set. For exploratory analysis, either method alone is appropriate.
 
-Methods
+### Methods
 
 ### Analytical Decisions
 
@@ -129,60 +129,6 @@ Design formula: ~ batch + gender + age + cohort
 - GSEA Reactome: run independently from DESeq2 and limma-voom ranked lists, pathway concordance compared
 - Visualization: volcano plots, UpSet overlap plot, dual heatmaps (R: ggplot2, ggrepel, pheatmap, UpSetR)
 - Pathway comparison figures: side-by-side DESeq2 vs limma-voom top pathways per comparison
-
-
-## Project Structure
-
-- scripts/
-├── 01_python_foundations.ipynb
-├── 02_python_programming.ipynb
-├── 03_numpy_and_data_wrangling.ipynb
-├── 04_real_geo_data.ipynb
-└── 05_deseq2_analysis.R
-
-- figures/
-├── practice/                     # Learning exercises with simulated data
-└── GSE161731/                    # Publication-quality figures from real data
-    ├── 01_cohort_overview.png
-    ├── 02_qc_library_size.png
-    ├── 03_pca_before_qc.png
-    ├── 04_pca_after_qc.png
-    ├── 05a_volcano_covid_vs_healthy.png
-    ├── 05b_volcano_influenza_vs_healthy.png
-    ├── 05c_volcano_bacterial_vs_healthy.png
-    ├── 05d_volcano_cov_other_vs_healthy.png
-    ├── 06_de_gene_counts.png
-    ├── 07_upset_de_genes.png
-    ├── 08a_gsea_reactome_covid.png          # DESeq2 vs limma-voom pathway comparison
-    ├── 08b_gsea_reactome_influenza.png      # DESeq2 vs limma-voom pathway comparison
-    ├── 08c_gsea_reactome_bacterial.png      # DESeq2 vs limma-voom pathway comparison
-    └── 08d_gsea_reactome_cov_other.png      # DESeq2 vs limma-voom pathway comparison
-    ├── 09a_heatmap_deseq2_vst.png
-    ├── 09b_heatmap_limma_voom.png
-    └── 10a_voom_mean_variance.png
-    └── 10b_deseq2_vs_limma_fc.png
-
-- results/
-├── GSE161731_counts_filtered.csv
-├── GSE161731_metadata_clean.csv
-├── DE_deseq2_COVID19_vs_healthy.csv
-├── DE_deseq2_Influenza_vs_healthy.csv
-├── DE_deseq2_Bacterial_vs_healthy.csv
-├── DE_deseq2_CoV_other_vs_healthy.csv
-├── DE_limma_COVID19_vs_healthy.csv
-├── DE_limma_Influenza_vs_healthy.csv
-├── DE_limma_Bacterial_vs_healthy.csv
-├── DE_limma_CoV_other_vs_healthy.csv
-├── GSEA_deseq2_COVID19_vs_healthy.csv
-├── GSEA_deseq2_Influenza_vs_healthy.csv
-├── GSEA_deseq2_Bacterial_vs_healthy.csv
-├── GSEA_deseq2_CoV_other_vs_healthy.csv
-├── GSEA_limma_COVID19_vs_healthy.csv
-├── GSEA_limma_Influenza_vs_healthy.csv
-├── GSEA_limma_Bacterial_vs_healthy.csv
-└── GSEA_limma_CoV_other_vs_healthy.csv
-
-- data/ Raw downloads (not tracked by git)
 
 ### Tools
 
