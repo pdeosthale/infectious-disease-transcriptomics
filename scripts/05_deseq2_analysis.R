@@ -16,10 +16,10 @@
 #
 # DESIGN FORMULA: ~ batch + gender + age + cohort
 #
-#   Covariates (adjustment variables — control for, not interested in):
+#   Covariates (adjustment variables to control for, not interested in):
 #     - batch: technical variation from processing on different days
 #     - gender: biological variation in sex-linked gene expression
-#     - age: biological variation (CRITICAL — severe age confounding in this dataset)
+#     - age: biological variation
 #
 #   Variable of interest (what we are testing):
 #     - cohort: infection type vs healthy controls
@@ -29,7 +29,7 @@
 #
 # Key analytical decisions documented in this script:
 #   1. Removed 2 cross-cohort subjects appearing as both healthy and CoV_other
-#   2. Removed repeated subjects — kept earliest timepoint per subject
+#   2. Removed repeated subjects : kept earliest timepoint per subject
 #   3. Removed samples with missing gender (all from CoV_other cohort)
 #   4. Removed samples with missing age
 #   5. Corrected for age confounding between cohorts
@@ -53,8 +53,6 @@
 #   to match the acute presentation timepoint of the other infection cohorts,
 #   who were enrolled at emergency department visits.
 # ==============================================================================
-
-
 # ==============================================================================
 # 1. SETUP: Load Libraries
 # ==============================================================================
@@ -313,7 +311,7 @@ for (coef_name in c("cohortCOVID19","cohortInfluenza",
 # 10. DESeq2 vs LIMMA-VOOM COMPARISON
 # ==============================================================================
 
-cat("\n=== Method Comparison (Independent Samples) ===\n\n")
+cat("\n=== Method Comparison  ===\n\n")
 cat("Comparison        | DESeq2  | limma   | Both    | Concordance\n")
 cat("------------------+---------+---------+---------+------------\n")
 for (name in c("COVID19","Influenza","Bacterial","CoV_other")) {
@@ -344,7 +342,7 @@ p_fc <- ggplot(comp_df, aes(x=deseq2_log2FC, y=limma_logFC, color=category)) +
     values=c("Both significant"="#8E44AD","DESeq2 only"="#E67E22",
              "limma only"="#5DADE2","Neither"="#BFBFBF"), name="") +
   geom_abline(slope=1, intercept=0, linetype="dashed", color="black", linewidth=0.5) +
-  labs(title="DESeq2 vs limma-voom: Fold Change Comparison (Independent Samples)",
+  labs(title="DESeq2 vs limma-voom: Fold Change Comparison",
        subtitle=paste0("COVID-19 vs Healthy | Pearson r = ", round(cor_val,3)),
        x=expression(bold(DESeq2~log[2]~"Fold Change")),
        y=expression(bold(limma-voom~log[2]~"Fold Change"))) +
@@ -405,7 +403,7 @@ make_volcano <- function(res_df, comparison_name, filename) {
                     segment.size=0.4, fontface="bold.italic", box.padding=0.6) +
     geom_hline(yintercept=-log10(0.05), linetype="dashed", color="black", linewidth=0.6) +
     geom_vline(xintercept=c(-1,1),       linetype="dashed", color="black", linewidth=0.6) +
-    labs(title=paste0(comparison_name," vs Healthy Controls (Independent Samples)"),
+    labs(title=paste0(comparison_name," vs Healthy Controls"),
          subtitle="GSE161731 | Model: ~ batch + gender + age + cohort",
          x=expression(bold(log[2]~"Fold Change")),
          y=expression(bold(-log[10]~"(FDR)"))) +
@@ -445,7 +443,7 @@ ggplot(summary_df, aes(x=comparison, y=count, fill=direction)) +
   geom_bar(stat="identity") +
   scale_fill_manual(values=c("Downregulated"="#3498db","Upregulated"="#e74c3c")) +
   geom_hline(yintercept=0, linewidth=0.5) +
-  labs(title="DE Genes vs Healthy Controls (Independent Samples, Age-Corrected)",
+  labs(title="DE Genes vs Healthy Controls",
        subtitle="GSE161731 | padj < 0.05 | Model: ~ batch + gender + age + cohort",
        x="", y="Number of DE Genes", fill="") +
   theme_minimal(base_size=13) +
@@ -484,6 +482,7 @@ upset_input <- data.frame(
 )
 
 dir.create("figures/GSE161731", showWarnings=FALSE, recursive=TRUE)
+graphics.off()  # force reset all graphics devices before UpSet
 png("figures/GSE161731/07_upset_de_genes.png",
     width=10, height=6, units="in", res=300)
 grid::grid.newpage()
@@ -507,7 +506,7 @@ cat("UpSet plot saved\n")
 # ==============================================================================
 #
 # WHY GSEA INSTEAD OF ORA?
-#   ORA takes a binary gene list — discards fold change info and is sensitive
+#   ORA takes a binary gene list that discards fold change information and is sensitive
 #   to arbitrary cutoffs. GSEA uses ALL genes ranked by fold change, testing
 #   whether pathway genes cluster at the top or bottom of the ranked list.
 #   More sensitive and not dependent on a significance cutoff.
@@ -517,11 +516,11 @@ cat("UpSet plot saved\n")
 #
 # WHY RUN GSEA FROM BOTH METHODS?
 #   The core question of this repo is whether DESeq2 and limma-voom lead to
-#   the same biological conclusions. Gene-level concordance (Section 10) shows
-#   agreement on individual genes. Pathway-level concordance asks a more
+#   the same biological conclusions. Gene level concordance (Section 10) shows
+#   agreement on individual genes. Pathway level concordance asks a more
 #   important question: do both methods identify the same biological processes?
-#   Pathway-level concordance is expected to be higher than gene-level because
-#   pathways are more robust — two methods may disagree on borderline genes
+#   Pathway level concordance is expected to be higher than gene level because
+#   pathways are more robust : two methods may disagree on borderline genes
 #   but still rank the same biological pathways as most enriched.
 #
 # RANKING METRIC: sign(log2FC) * -log10(pvalue)
@@ -530,8 +529,8 @@ cat("UpSet plot saved\n")
 #   limma-voom: uses logFC and P.Value columns
 #
 # PLOT DESIGN:
-#   Side-by-side: top 5 activated + top 5 suppressed from each method.
-#   Shared pathways highlighted to show pathway-level concordance.
+#   Side by side: top 5 activated + top 5 suppressed from each method.
+#   Shared pathways highlighted to show pathway level concordance.
 
 # --- Helper: build ranked list from DESeq2 results ---
 make_ranked_list_deseq2 <- function(res_df) {
@@ -717,8 +716,8 @@ for (name in names(comp_labels)) {
 # ==============================================================================
 #
 # Top 50 DE genes from COVID19 vs Healthy shown across ALL samples.
-# DESeq2 VST: sophisticated variance stabilization — recommended for visualization.
-# limma-voom log2-CPM: the E matrix from voom() — same values used in the model.
+# DESeq2 VST: sophisticated variance stabilization that is recommended for visualization.
+# limma-voom log2-CPM: the E matrix from voom() : same values used in the model.
 # Both produce log-scale stabilized values. Z-scoring per gene centers each
 # gene so colors reflect relative expression, not absolute levels.
 #

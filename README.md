@@ -26,7 +26,7 @@ QC steps applied:
 
 - Gene filtering: removed genes detected in < 10% of samples (60,675 → 28,996 genes)
 - Outlier removal: 2 samples removed via PCA (very low library size and gene detection)
-- Cross-cohort subjects: 2 subjects (A34BBC, E77BE3) removed — appeared as both healthy and CoV_other
+- Cross-cohort subjects: 2 subjects (A34BBC, E77BE3) removed : appeared as both healthy and CoV_other
 - Pseudoreplication: 14 COVID-19 patients had multiple timepoints; kept earliest only
 - Missing gender: 21 samples removed (all CoV_other) to include gender as adjustment variable
 - Missing age: samples with NA age removed to include age as adjustment variable
@@ -39,11 +39,11 @@ QC steps applied:
 
 ##1. One sample per subject for independent comparisons
 
-The dataset includes 14 COVID-19 patients sampled at multiple timepoints (early/middle/late disease). The original authors accounted for this using limma::duplicateCorrelation(), which is a statistically valid approach that retains all timepoints. We took a more conservative approach — restricting to one sample per subject (earliest timepoint) — to enable a fair comparison between DESeq2 and limma-voom on identical data. DESeq2 has no equivalent to duplicateCorrelation(), so including repeated samples would have made the two-method comparison unequal. This reduced COVID-19 DE genes from 2,820 to 874, reflecting the reduced sample size and removal of within-subject correlation, not a correction of an error in the original study.
+The dataset includes 14 COVID-19 patients sampled at multiple timepoints (early/middle/late disease). The original authors accounted for this using limma::duplicateCorrelation(), which is a statistically valid approach that retains all timepoints. We took a more conservative approach by restricting to one sample per subject (earliest timepoint) to enable a fair comparison between DESeq2 and limma-voom on identical data. DESeq2 has no equivalent to duplicateCorrelation(), so including repeated samples would have made the two method comparison unequal. This reduced COVID-19 DE genes from 2,820 to 874, reflecting the reduced sample size and removal of within-subject correlation, not a correction of an error in the original study.
 
 ### 2. Age adjustment in a multi-cohort design
 
-The study enrolled participants from different sources - healthy controls from a university undergraduate cohort (median age 18) and infected patients from emergency departments and clinical studies (median age 33–60 depending on cohort). This age variation across cohorts is an inherent feature of the multi-cohort design. In our reanalysis, we included age as an adjustment variable to isolate infection-specific transcriptomic effects from age-related gene expression differences. Without age adjustment, bacterial DE genes totaled 10,564; with age adjustment, 7,607 — a ~28% difference that illustrates the contribution of age-related gene expression in this cross-cohort comparison.
+The study enrolled participants from different sources. Healthy controls from a university undergraduate cohort (median age 18) and infected patients from emergency departments and clinical studies (median age 33–60 depending on cohort). This age variation across cohorts is an inherent feature of the multi-cohort design. In our reanalysis, we included age as an adjustment variable to isolate infection-specific transcriptomic effects from age-related gene expression differences. Without age adjustment, bacterial DE genes totaled 10,564; with age adjustment, 7,607 — a ~28% difference that illustrates the contribution of age-related gene expression in this cross-cohort comparison.
 
 | Comparison | Without Age Adjustment | With Age Adjustment | Removed | % Change |
 |---|---|---|---|---|
@@ -55,7 +55,7 @@ The study enrolled participants from different sources - healthy controls from a
 ###Key Findings
 ### 1 Bacterial infection triggers the largest transcriptomic shift
 
-In our age-adjusted, one-sample-per-subject analysis, bacterial infection produces the most DE genes (~7,600) — roughly 3x more than any viral group. This reflects fundamental biological differences: bacterial infections activate neutrophil-dominated innate immunity through TLR2/4 pattern recognition and acute phase responses, while viral infections primarily trigger more targeted interferon-mediated pathways.
+In our age-adjusted, one-sample-per-subject analysis, bacterial infection produces the most DE genes (~7,600) — roughly 3x more than any viral group. This reflects fundamental biological differences: bacterial infections activate neutrophil-dominated innate immunity through TLR2/4 pattern recognition and acute phase responses, while viral infections primarily trigger more targeted interferon mediated pathways.
 
 
 ###2. IFI27 is a robust COVID-19 blood biomarker
@@ -66,13 +66,13 @@ IFI27 (interferon-stimulated gene 27) was the most significant upregulated gene 
 
 GSEA Reactome analysis identified two distinct biological themes in genes uniquely DE in COVID-19:
 
-- Adaptive immune activation: B cell mediated immunity, immunoglobulin-mediated immune response, lymphocyte mediated immunity — reflecting strong antibody and B cell responses
-- Cell cycle/mitosis: Mitotic prometaphase, cell cycle checkpoints, resolution of sister chromatid cohesion — reflecting lymphocyte proliferation and clonal expansion
+- Adaptive immune activation: B cell mediated immunity, immunoglobulin-mediated immune response, lymphocyte mediated immunity reflecting strong antibody and B cell responses
+- Cell cycle/mitosis: Mitotic prometaphase, cell cycle checkpoints, resolution of sister chromatid cohesion reflecting lymphocyte proliferation and clonal expansion
 
 
 ###4. Translation machinery is suppressed across all infections
 
-GSEA Reactome identified suppression of Eukaryotic Translation Elongation, Peptide Chain Elongation, rRNA processing, and oxidative phosphorylation across all infection groups. This is consistent with host shutdown of translation machinery during acute infection — redirecting cellular resources toward immune defense.
+GSEA Reactome identified suppression of Eukaryotic Translation Elongation, Peptide Chain Elongation, rRNA processing, and oxidative phosphorylation across all infection groups. This is consistent with host shutdown of translation machinery during acute infection redirecting cellular resources toward immune defense.
 
 ###5. DESeq2 and limma-voom show strong agreement
 
@@ -80,7 +80,7 @@ Both methods were run on the same independent samples with the same design formu
 
 Gene-level (fold change correlation): Pearson r = 0.81, indicating strong agreement on direction and magnitude of individual gene expression changes.
 
-Gene-level (significance concordance): Ranges from 48-76% depending on comparison — lower concordance reflects borderline genes near the significance threshold, not biological disagreement.
+Gene-level (significance concordance): Ranges from 48-76% depending on comparison; lower concordance reflects borderline genes near the significance threshold, not biological disagreement.
 
 Pathway-level (GSEA Reactome concordance): Substantially higher for most comparisons, confirming that even when methods disagree on individual borderline genes, they converge on the same biological processes.
 
@@ -209,7 +209,7 @@ Limitations
 
 Multi-cohort age variation: Age varies systematically across cohorts due to different recruitment sources (university students vs emergency department patients). We include age as an adjustment variable, but residual confounding cannot be fully excluded in a cross-cohort observational design.
 Blood transcriptomics: Captures systemic immune response, not local infection site biology. Nasal or respiratory samples would show stronger pathogen-specific signatures, particularly for interferon-stimulated genes.
-Unequal group sizes: COVID-19 n=45 vs Influenza n=17 after deduplication — affects statistical power for Influenza comparisons.
+Unequal group sizes: COVID-19 n=45 vs Influenza n=17 after deduplication that affects statistical power for Influenza comparisons.
 Cross-cohort design: Cohorts were enrolled from different studies and locations (university undergraduates vs emergency department patients). Age and severity confounding cannot be fully removed statistically.
 One sample per subject: Original authors used duplicateCorrelation() to retain all timepoints while accounting for within-subject correlation. We used one sample per subject (earliest timepoint) to enable fair DESeq2 vs limma-voom comparison. Results for COVID-19 in particular may differ from the original paper due to reduced sample size.
 ## References
