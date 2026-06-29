@@ -1,28 +1,28 @@
 # Infectious Disease Transcriptomics
 
-Computational analysis of host immune responses to respiratory infections using public blood transcriptomic data. This project applies differential expression analysis to characterize pathogen-specific and shared transcriptomic signatures across viral and bacterial respiratory infections.
+Host blood transcriptome analysis across four respiratory infections using publicly available RNA-seq data. This project characterizes pathogen-specific and shared transcriptomic signatures, identifies infection-specific gene sets, and uses pathway analysis to interpret the biological processes driving each host response.
 
 ## Biological Question
 
-How does the blood transcriptome differ across respiratory infections (COVID-19, Influenza, other coronaviruses, bacterial pneumonia) compared to healthy controls? Are there shared host response genes across all infections, or does each pathogen trigger a distinct transcriptomic program?
+What transcriptomic signatures are shared vs unique across COVID-19, Influenza, bacterial pneumonia, and seasonal coronavirus infections? Can we identify a pan-infection host response, a shared viral signature, and pathogen-specific gene sets — and what biological pathways do each represent?
 
 ## Disclaimer
 
-This is an independent secondary analysis of publicly available data from GEO (GSE161731) for educational and portfolio purposes. The original study was designed and conducted by McClain et al. (2021). Any interpretations, limitations identified, or analytical choices reflect the author's own learning process and do not represent the views or conclusions of the original investigators.
+This is an independent secondary analysis of publicly available data from GEO (GSE161731) for educational and portfolio purposes. The original study was designed and conducted by McClain et al. (2021). Analytical choices and interpretations reflect the author's own learning process and do not represent the views of the original investigators.
 
 ## Dataset
 
-**GSE161731** — Blood RNA-seq from patients with respiratory infections.
+**GSE161731** — Blood RNA-seq from patients with acute respiratory infections and healthy controls.
 
 Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
 
 | Cohort | Samples (after QC) | Median Age |
-|--------|-------------------|------------|
+|---|---|---|
+| Healthy | 17 | 18 |
 | COVID-19 | 45 | 33 |
-| CoV other | 36 | 18 |
 | Influenza | 17 | 18 |
 | Bacterial | 23 | 60 |
-| Healthy | 17 | 18 |
+| CoV other | 36 | 18 |
 
 **Final sample count: 136 independent samples** after all QC and deduplication steps.
 
@@ -35,107 +35,92 @@ Source: McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcri
 - Missing gender: 21 samples removed (all CoV_other) to include gender as adjustment variable
 - Missing age: samples with NA age removed to include age as adjustment variable
 
+## Method
+
+**limma-voom** with TMM normalization — consistent with the original McClain et al. paper which used limma GLMs.
+
+limma-voom is not a generalized linear model (GLM). Rather than modeling count variance through a distributional assumption (as DESeq2 does with the negative binomial), voom estimates the mean-variance relationship non-parametrically and converts it into per-observation precision weights. These weights are fed into a standard weighted least squares linear model, enabling the full flexibility of limma's empirical Bayes moderation.
+
+**Design formula:** `~ batch + gender + age + cohort`
+
+- Covariates: batch (technical), gender (biological), age (biological — varies systematically across cohorts due to different recruitment sources)
+- Variable of interest: cohort (infection type vs healthy controls)
+- Reference level: healthy controls
+- Significance threshold: FDR < 0.05
+
+**Key difference from original paper:** The original authors used `duplicateCorrelation()` to retain all timepoints while accounting for within-subject correlation. We used one sample per subject (earliest timepoint) to ensure all observations are independent and simplify the analysis.
+
 ## Key Analytical Choices
 
-### 1. One sample per subject for independent comparisons
+### 1. One sample per subject
 
-The dataset includes 14 COVID-19 patients sampled at multiple timepoints (early/middle/late disease). The original authors accounted for this using `limma::duplicateCorrelation()`, which is a statistically valid approach that retains all timepoints. We took a more conservative approach — restricting to one sample per subject (earliest timepoint) — to enable a fair comparison between DESeq2 and limma-voom on identical data. DESeq2 has no equivalent to `duplicateCorrelation()`, so including repeated samples would have made the two-method comparison unequal. This reduced COVID-19 DE genes from 2,820 to 874, reflecting the reduced sample size and removal of within-subject correlation, not a correction of an error in the original study.
+14 COVID-19 patients were sampled at multiple timepoints (early/middle/late disease). We kept only the earliest timepoint to ensure independence. This is more conservative than `duplicateCorrelation()` and means COVID-19 results reflect early disease only — relevant for interpreting effect sizes relative to other cohorts sampled at peak illness.
 
-### 2. Age adjustment in a multi-cohort design
+### 2. Age adjustment
 
-The study enrolled participants from different sources — healthy controls from a university undergraduate cohort (median age 18) and infected patients from emergency departments and clinical studies (median age 33–60 depending on cohort). This age variation across cohorts is an inherent feature of the multi-cohort design. In our reanalysis, we included age as an adjustment variable to isolate infection-specific transcriptomic effects from age-related gene expression differences.
-
-| Comparison | Without Age Adjustment | With Age Adjustment | Difference | % Change |
-|---|---|---|---|---|
-| Bacterial vs Healthy | 10,564 | 7,607 | 2,957 | 28% |
-| COVID-19 vs Healthy | 3,816 | 874* | — | — |
-
-*After both one-sample-per-subject restriction and age adjustment.
+Age varies systematically across cohorts (healthy median 18, bacterial median 60) due to different recruitment sources. We included age as an adjustment variable to isolate infection-specific transcriptomic effects from age-related gene expression differences.
 
 ## Key Findings
 
 ### 1. Bacterial infection triggers the largest transcriptomic shift
 
-In our age-adjusted, one-sample-per-subject analysis, bacterial infection produces the most DE genes (approximately 7,600) — roughly 3x more than any viral group. This reflects fundamental biological differences: bacterial infections activate neutrophil-dominated innate immunity through TLR2/4 pattern recognition and acute phase responses, while viral infections primarily trigger more targeted interferon-mediated pathways.
+Bacterial pneumonia produced the most DE genes, with neutrophil degranulation as the top activated pathway. This reflects fundamental biological differences: bacterial infections activate neutrophil-dominated innate immunity through TLR2/4 pattern recognition, while viral infections primarily trigger interferon-mediated pathways.
 
-### 2. IFI27 is a robust COVID-19 blood biomarker
+### 2. Translation machinery is universally suppressed across all four infections
 
-IFI27 (interferon-stimulated gene 27) was the most significant upregulated gene in COVID-19 vs Healthy (log2FC = 3.95, padj = 4.2e-06) and remained significant in our age-adjusted, one-sample-per-subject analysis. This is consistent with published literature identifying IFI27 as one of the most reliable COVID-19 blood transcriptomic biomarkers.
+The pan-infection gene set (shared across COVID-19, Influenza, Bacterial, and CoV_other) is strongly enriched for translation machinery suppression — ribosomal subunits, peptide chain elongation, eukaryotic translation initiation, and nonsense-mediated decay pathways (FDR approximately 10^-50). This universal host response likely reflects redirection of cellular resources toward immune defense during acute infection.
 
-### 3. Cell cycle and B cell activation are COVID-19 unique pathways
+### 3. COVID-19-specific signature is enriched for cell cycle and mitotic pathways
 
-GSEA Reactome analysis identified two distinct biological themes in genes upregulated in COVID-19:
+Genes uniquely differentially expressed in COVID-19 (not in Influenza, Bacterial, or CoV_other) are enriched for cell cycle, M phase, mitotic checkpoints, and cell cycle checkpoints. This is consistent with lymphocyte proliferation and B cell clonal expansion — a hallmark of SARS-CoV-2 adaptive immune activation documented in the original paper.
 
-- **Adaptive immune activation:** B cell mediated immunity, immunoglobulin-mediated immune response, lymphocyte mediated immunity — reflecting strong antibody and B cell responses
-- **Cell cycle/mitosis:** Mitotic prometaphase, cell cycle checkpoints, resolution of sister chromatid cohesion — reflecting lymphocyte proliferation and clonal expansion
+### 4. Influenza drives a stronger interferon response than COVID-19
 
-### 4. Translation machinery is suppressed across all infections
+Influenza shows the clearest interferon signature of all four infections — Interferon Signaling, Interferon gamma signaling, and Interferon alpha/beta signaling are all among the top activated pathways. COVID-19 notably lacks a prominent interferon signature in the GSEA results, consistent with published evidence that SARS-CoV-2 actively suppresses type I interferon responses through multiple mechanisms (NSP1, NSP16).
 
-GSEA Reactome identified suppression of Eukaryotic Translation Elongation, Peptide Chain Elongation, rRNA processing, and oxidative phosphorylation across all infection groups. This is consistent with host shutdown of translation machinery during acute infection — redirecting cellular resources toward immune defense.
+### 5. Coronavirus-specific suppression of mRNA splicing machinery
 
-### 5. DESeq2 and limma-voom show strong agreement, especially at the pathway level
+ORA on the coronavirus-specific gene set (COVID-19 and CoV_other only, absent in Influenza and Bacterial) identified enrichment of mRNA splicing pathways. The driving genes are LSM6, LSM8, SLU7, and SF3A1 — components of the spliceosome LSm2-8 ring and U2 snRNP complex.
 
-Both methods were run on the same independent samples with the same design formula. The comparison operates at three levels:
+Expression analysis confirms:
 
-**Gene-level fold change correlation:** Pearson r = 0.81, indicating strong agreement on direction and magnitude of individual gene expression changes.
+| Gene | Role | COVID-19 logFC | CoV_other logFC | Influenza | Bacterial |
+|---|---|---|---|---|---|
+| LSM8 | LSm ring, U6 snRNA stabilization | -0.90 * | -0.93 *** | ns | ns |
+| LSM6 | LSm ring, U6 snRNA stabilization | -0.47 * | -0.57 *** | ns | ns |
+| SLU7 | 3' splice site recognition | -0.54 * | -0.62 ** | ns | ns |
+| SF3A1 | U2 snRNP, branch point recognition | +0.51 * | +0.46 ** | ns | ns |
 
-**Gene-level significance concordance:** Ranges from 48–76% depending on comparison. Lower concordance reflects borderline genes near the significance threshold, not biological disagreement.
+LSM6, LSM8, and SLU7 are downregulated in both coronavirus infections while SF3A1 is upregulated — a structured bidirectional pattern suggesting specific disruption of spliceosome assembly rather than nonspecific transcriptional noise.
 
-**Pathway-level GSEA Reactome concordance:** Higher than gene-level concordance for Influenza, Bacterial, and CoV_other, confirming that both methods converge on the same biological processes even when disagreeing on borderline genes. COVID-19 is an exception — see note below.
+This is consistent with published evidence that SARS-CoV-2 NSP16 binds U1/U2 snRNA to suppress global host mRNA splicing (Bhatt et al. 2021, Cell). Crucially, this pattern is present in CoV_other (seasonal coronaviruses) as well as COVID-19, confirming it is a coronavirus class effect rather than SARS-CoV-2-specific.
 
-| Comparison | Gene concordance | Pathway concordance |
-|---|---|---|
-| COVID-19 | approx. 55% | 36.4% (see note) |
-| Influenza | approx. 58% | 74.3% |
-| Bacterial | approx. 75% | 73.2% |
-| CoV other | approx. 58% | 73.4% |
+**Important caveat:** Effect sizes are modest (|log2FC| 0.47-0.93) with high inter-individual variability. The stronger effect in CoV_other relative to COVID-19 likely reflects the analytical choice to use only the earliest COVID-19 timepoint — peak splicing dysregulation may occur later in disease. This is an exploratory finding requiring validation in larger cohorts. A longitudinal analysis is planned as a follow-up in the covid19-host-response-dynamics repository.
 
-Note on COVID-19: Pathway concordance is lower than gene concordance due to asymmetric pathway detection (DESeq2: 143 pathways, limma-voom: 322 pathways). Reduced statistical power after one-sample-per-subject restriction (n=45, 874 DE genes) likely contributes — with fewer DE genes, small differences in gene ranking push different pathways across the significance threshold.
+### 6. CoV_other-specific signature shows unexpected neuronal pathway enrichment
 
-**Key conclusion:** For three of four comparisons (Influenza, Bacterial, CoV_other), both methods identify the same biological pathways as significantly enriched, suggesting pathway-level conclusions are more robust to method choice than individual gene calls.
+Genes uniquely differentially expressed in CoV_other show enrichment for nervous system development, axon guidance, and neuronal system pathways (FDR 0.2-0.6). These findings have high FDR and should be considered hypothesis-generating only. The neuronal enrichment may reflect cohort-specific biology, the younger age of CoV_other subjects, or neurotropic effects of seasonal coronaviruses.
 
-**Voom mean-variance trend:** The voom plot shows the expected pattern for well-behaved RNA-seq data — low-count genes (left) have high relative variance, while high-count genes (right) show decreasing variance. The smooth red trend line is used by voom to assign precision weights: high-variance genes get lower weights in the linear model, preventing noisy low-count genes from dominating the results. This is analogous to DESeq2's dispersion shrinkage but implemented through a different statistical framework.
+## Analysis Pipeline
 
-**Practical recommendation:** For downstream analyses (biomarker selection, pathway analysis), using the intersection of DESeq2 and limma-voom results provides the most robust gene set. For exploratory analysis, either method alone is appropriate.
-
-## Methods
-
-### Statistical Model
-
-```
-Design formula: ~ batch + gender + age + cohort
-```
-
-- **Covariates (adjustment variables):** batch, gender, age
-- **Variable of interest:** cohort (infection type vs healthy controls)
-- Reference level: healthy controls
-- DESeq2 with apeglm log2 fold change shrinkage
-- limma-voom with TMM normalization and empirical Bayes moderation
-- Both methods applied to identical independent samples for direct comparison
-- Significance threshold: FDR < 0.05
-
-**Fold change filtering:** FDR < 0.05 only — no |log2FC| cutoff applied. The DESeq2 authors recommend against hard FC cutoffs; apeglm shrinkage handles noisy low-count genes. Dashed lines at |log2FC| = 1 on volcano plots provide visual context without discarding data.
-
-### Analysis Pipeline
-
-1. Data download from GEO (Python: GEOparse)
-2. Exploratory QC: library size, gene detection, PCA, outlier identification (Python: pandas, scikit-learn)
-3. Sample deduplication: cross-cohort subject removal, one sample per subject (R)
-4. Differential expression: DESeq2 and limma-voom with age-adjusted model (R)
-5. Gene-level comparison: concordance table and fold change correlation (Pearson r)
-6. GSEA Reactome: run independently from DESeq2 and limma-voom ranked lists, pathway concordance compared
-7. Visualization: volcano plots, UpSet overlap plot, dual heatmaps (R: ggplot2, ggrepel, pheatmap, UpSetR)
-8. Pathway comparison figures: side-by-side DESeq2 vs limma-voom top pathways per comparison
+1. Data download: Python — GEOparse, count matrix and key file from GEO FTP
+2. Exploratory QC: Python — library size, gene detection, PCA, outlier identification
+3. Sample QC and deduplication: R — cross-cohort subject removal, one sample per subject
+4. Differential expression: R — limma-voom, TMM normalization, empirical Bayes moderation
+5. Gene set definition: R — infection-specific, shared viral, pan-infection, coronavirus gene sets
+6. Pathway analysis: R — GSEA (Reactome, per infection) and ORA (Reactome, per gene set)
+7. Visualization: R — volcano plots, UpSet, Venn, GSEA dot plots, ORA dot plots, heatmap, boxplots
 
 ## Project Structure
 
 ```
 scripts/
-├── 01_data_download_qc.ipynb
-└── 02_deseq2_limma_analysis.R
+├── 01_data_download_qc.ipynb        # Python: data download and QC
+└── 02_limma_voom_analysis.R         # R: DE analysis, pathway analysis, visualization
 
 figures/
 └── GSE161731/
+    ├── 00_voom_mean_variance.png
     ├── 01_cohort_overview.png
     ├── 02_qc_library_size.png
     ├── 03_pca_before_qc.png
@@ -145,60 +130,69 @@ figures/
     ├── 05c_volcano_bacterial_vs_healthy.png
     ├── 05d_volcano_cov_other_vs_healthy.png
     ├── 06_de_gene_counts.png
-    ├── 07_upset_de_genes.png
-    ├── 08a_gsea_reactome_covid.png
-    ├── 08b_gsea_reactome_influenza.png
-    ├── 08c_gsea_reactome_bacterial.png
-    ├── 08d_gsea_reactome_cov_other.png
-    ├── 09a_heatmap_deseq2_vst.png
-    ├── 09b_heatmap_limma_voom.png
-    ├── 10a_voom_mean_variance.png
-    └── 10b_deseq2_vs_limma_fc.png
+    ├── 07_upset_infection_overlap.svg
+    ├── 08_venn_four_way.png
+    ├── 09a_gsea_covid19.png
+    ├── 09a_gsea_influenza.png
+    ├── 09a_gsea_bacterial.png
+    ├── 09a_gsea_cov_other.png
+    ├── 09b_ora_covid_specific.png
+    ├── 09c_ora_influenza_specific.png
+    ├── 09d_ora_bacterial_specific.png
+    ├── 09e_ora_cov_other_specific.png
+    ├── 09f_ora_shared_viral.png
+    ├── 09g_ora_shared_all.png
+    ├── 09h_ora_coronavirus.png
+    ├── 10_heatmap_top50.png
+    └── 11_boxplot_coronavirus_splicing.png
 
 results/
-├── DE_deseq2_COVID19_vs_healthy.csv
-├── DE_deseq2_Influenza_vs_healthy.csv
-├── DE_deseq2_Bacterial_vs_healthy.csv
-├── DE_deseq2_CoV_other_vs_healthy.csv
 ├── DE_limma_COVID19_vs_healthy.csv
 ├── DE_limma_Influenza_vs_healthy.csv
 ├── DE_limma_Bacterial_vs_healthy.csv
 ├── DE_limma_CoV_other_vs_healthy.csv
-├── GSEA_deseq2_COVID19_vs_healthy.csv
-├── GSEA_deseq2_Influenza_vs_healthy.csv
-├── GSEA_deseq2_Bacterial_vs_healthy.csv
-├── GSEA_deseq2_CoV_other_vs_healthy.csv
-├── GSEA_limma_COVID19_vs_healthy.csv
-├── GSEA_limma_Influenza_vs_healthy.csv
-├── GSEA_limma_Bacterial_vs_healthy.csv
-└── GSEA_limma_CoV_other_vs_healthy.csv
+├── GSEA_COVID19_vs_healthy.csv
+├── GSEA_Influenza_vs_healthy.csv
+├── GSEA_Bacterial_vs_healthy.csv
+├── GSEA_CoV_other_vs_healthy.csv
+├── ORA_covid_specific.csv
+├── ORA_influenza_specific.csv
+├── ORA_bacterial_specific.csv
+├── ORA_cov_other_specific.csv
+├── ORA_shared_viral.csv
+├── ORA_shared_all.csv
+└── ORA_coronavirus.csv
 
-data/                    # Raw downloads (not tracked by git)
+data/                                # Downloaded from GEO on first run (not tracked)
 ```
 
 ## Tools
 
-**Python:** NumPy, pandas, matplotlib, seaborn, scikit-learn, GEOparse, SciPy
+**Python:** GEOparse, NumPy, pandas, matplotlib, seaborn, scikit-learn
 
-**R:** DESeq2, apeglm, limma, edgeR, tidyverse, ggplot2, ggrepel, ReactomePA, clusterProfiler, org.Hs.eg.db, pheatmap, RColorBrewer, UpSetR, patchwork
+**R:** limma, edgeR, tidyverse, ggplot2, ggrepel, pheatmap, RColorBrewer, ReactomePA, clusterProfiler, org.Hs.eg.db, AnnotationDbi, UpSetR, VennDiagram, patchwork
 
 ## How to Reproduce
 
 1. Clone this repository
-2. Download raw data: run `scripts/01_data_download_qc.ipynb` to download GSE161731 from GEO and perform QC
-3. Run `scripts/02_deseq2_limma_analysis.R` for all differential expression, GSEA, and visualization
+2. Run `scripts/01_data_download_qc.ipynb` — downloads GSE161731 from GEO and performs initial QC
+3. Run `scripts/02_limma_voom_analysis.R` — all DE analysis, pathway analysis, and figures
 
 ## Limitations
 
-- **Multi-cohort age variation:** Age varies systematically across cohorts due to different recruitment sources (university students vs emergency department patients). We include age as an adjustment variable, but residual confounding cannot be fully excluded in a cross-cohort observational design.
-- **Blood transcriptomics:** Captures systemic immune response, not local infection site biology. Nasal or respiratory samples would show stronger pathogen-specific signatures, particularly for interferon-stimulated genes.
-- **Unequal group sizes:** COVID-19 n=45 vs Influenza n=17 after deduplication — affects statistical power for Influenza comparisons.
-- **One sample per subject:** Original authors used `duplicateCorrelation()` to retain all timepoints while accounting for within-subject correlation. We used one sample per subject (earliest timepoint) to enable fair DESeq2 vs limma-voom comparison. Results for COVID-19 may differ from the original paper due to reduced sample size.
+- **Blood transcriptomics:** Captures systemic immune response, not local infection site biology. Pathogen-specific signatures would be stronger in nasal or respiratory samples.
+- **Early timepoint only for COVID-19:** 14 COVID-19 patients had longitudinal samples; only the earliest timepoint was retained. Results for COVID-19 reflect early disease and may underestimate effects that develop at peak viral load.
+- **Age imbalance across cohorts:** Age varies systematically by cohort due to different recruitment sources. Age is included as a covariate but residual confounding cannot be fully excluded.
+- **Small group sizes:** Influenza n=17 and healthy n=17 limit statistical power for those comparisons.
+- **Exploratory ORA findings:** Several infection-specific ORA results have FDR above 0.1 (notably Influenza-specific and CoV_other-specific gene sets). These should be interpreted as hypothesis-generating.
+- **Coronavirus splicing finding:** Effect sizes are modest with high inter-individual variability. Requires validation in larger cohorts.
 
 ## References
 
 McClain, M.T., Constantine, F.J., Henao, R. et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nature Communications* 12, 1079 (2021). https://doi.org/10.1038/s41467-021-21289-y
 
-Stupnikov, A. et al. Robustness of differential gene expression analysis of RNA-seq. *Computational and Structural Biotechnology Journal* 19, 3470-3481 (2021). https://doi.org/10.1016/j.csbj.2021.05.040
+Law, C.W., Chen, Y., Shi, W. & Smyth, G.K. voom: precision weights unlock linear model analysis tools for RNA-seq read counts. *Genome Biology* 15, R29 (2014). https://doi.org/10.1186/gb-2014-15-2-r29
 
-Costa-Silva, J., Domingues, D. & Lopes, F.M. RNA-Seq differential expression analysis: An extended review and a software tool. *PLOS ONE* 12, e0190152 (2017). https://doi.org/10.1371/journal.pone.0190152
+Bhatt, D.L. et al. SARS-CoV-2 Disrupts Splicing, Translation, and Protein Trafficking to Suppress Host Defenses. *Cell* 183, 1325-1339 (2020). https://doi.org/10.1016/j.cell.2020.10.004
+
+Liao, Y., Smyth, G.K. & Shi, W. featureCounts: an efficient general purpose program for assigning sequence reads to genomic features. *Bioinformatics* 30, 923-930 (2014). https://doi.org/10.1093/bioinformatics/btt656
