@@ -140,3 +140,7 @@ Genes shared between COVID-19 and CoV other but not Influenza or Bacterial infec
 ## Reference
 
 McClain MT, Constantine FJ, Henao R, et al. Dysregulated transcriptional responses to SARS-CoV-2 in the periphery. *Nat Commun.* 2021;12:1079. https://doi.org/10.1038/s41467-021-21289-y
+
+## License
+
+MIT License — see [LICENSE](LICENSE) for details. This code is shared for demonstration and educational purposes; verify results independently before relying on them in any downstream analysis.
