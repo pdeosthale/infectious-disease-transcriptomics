@@ -16,7 +16,7 @@ Do respiratory infections leave distinct transcriptional signatures in blood, an
 |---|---|---|---|
 | [GSE161731](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE161731) | McClain et al. 2021, *Nat Commun* | COVID-19, Influenza, Bacterial, CoV other, Healthy | 136 samples (analysis set; see QC below) |
 
-**Design:** 5 cohorts, 2 batches. Age is a significant covariate — bacterial cohort median age ~60 vs ~20 for other groups. Model: `~ batch + gender + age + cohort`.
+**Design:** 5 cohorts, 2 batches. Age is a significant covariate because the bacterial cohort median age is ~60 vs ~20 for other groups. Model: `~ batch + gender + age + cohort`.
 
 ---
 
@@ -70,13 +70,13 @@ infectious-disease-transcriptomics/
 - Library size and gene detection assessed per cohort
 - PCA-based outlier removal: 2 extreme outliers identified on PC1 and removed (198 → 196 samples)
 - Sample filtering before DE: 2 subjects appearing in more than one cohort removed (→ 192); earliest timepoint kept per subject (→ 151); samples missing gender (→ 137) or age (→ 136) removed
-- Final analysis set: 136 independent samples — healthy 17, COVID-19 45, Influenza 17, Bacterial 23, CoV other 34
+- Final analysis set: 136 independent samples: healthy 17, COVID-19 45, Influenza 17, Bacterial 23, CoV other 34
 
 ### Differential Expression
 limma-voom with model `~ batch + gender + age + cohort`. One sample per subject (earliest timepoint). Healthy controls as reference. Four contrasts: COVID-19, Influenza, Bacterial, CoV other vs Healthy. FDR < 0.05, |log2FC| > 1.
 
 ### Overlap Analysis
-DEG union across contrasts — UpSet plot and four-way Venn diagram to identify infection-specific and shared gene sets.
+DEG union across contrasts visualized with an UpSet plot and four-way Venn diagram to identify infection-specific and shared gene sets.
 
 ### Pathway Analysis
 - **GSEA**: Reactome gene sets, ranked by sign(log2FC) × −log10(adj.p), per infection type
@@ -92,21 +92,21 @@ Bacterial infection shows the most extensive DEG signature (3,382 upregulated / 
 
 ### 2. Ribosomal gene suppression is a universal infection signature
 
-373 genes are differentially expressed across all four infections. Pathway analysis of this pan-infection signature identifies ribosomal biogenesis and translation as the dominant theme — eukaryotic translation initiation/elongation, NMD, peptide chain elongation all strongly suppressed. This pattern is visible in all four volcano plots and confirmed in the top 50 DE gene heatmap, which is dominated by RPL/RPS family genes.
+373 genes are differentially expressed across all four infections. Pathway analysis of this pan-infection signature identifies ribosomal biogenesis and translation as the dominant theme, with eukaryotic translation initiation/elongation, NMD and peptide chain elongation all strongly suppressed. This pattern is visible in all four volcano plots and confirmed in the top 50 DE gene heatmap, which is dominated by RPL/RPS family genes.
 
 ### 3. Interferon signaling distinguishes viral from bacterial infections
 
-Viral infections (Influenza, CoV other) show strong upregulation of interferon signaling (IFN-α/β, IFN-γ) by GSEA — absent in bacterial infection. Influenza shows the clearest IFN signature (Interferon Signaling NES ~2.3, Interferon gamma signaling NES ~2.2, Interferon alpha/beta signaling NES ~2.1). Bacterial infection instead activates neutrophil degranulation and Rho GTPase/cytoskeletal pathways.
+Viral infections (Influenza, CoV other) show strong upregulation of interferon signaling (IFN-α/β, IFN-γ) by GSEA, but this signal is absent in bacterial infection. Influenza shows the clearest IFN signature (Interferon Signaling NES ~2.3, Interferon gamma signaling NES ~2.2, Interferon alpha/beta signaling NES ~2.1). Bacterial infection instead activates neutrophil degranulation and Rho GTPase/cytoskeletal pathways.
 
 ### 4. Coronavirus infections share an mRNA splicing signature absent in other infections
 
-Genes shared between COVID-19 and CoV other but not Influenza or Bacterial infections are enriched for mRNA splicing pathways — "Processing of Capped Intron-Containing Pre-mRNA", "mRNA Splicing — Major Pathway", "mRNA Splicing" (all FDR < 0.05, gene ratio ~0.22). Individual splicing factor genes (LSM6, LSM8, SF3A1, SLU7) are significantly downregulated in COVID-19 and CoV other vs healthy, but not in Influenza or Bacterial infections.
+Genes shared between COVID-19 and CoV other but not Influenza or Bacterial infections are enriched for mRNA splicing pathways: "Processing of Capped Intron-Containing Pre-mRNA", "mRNA Splicing - Major Pathway", "mRNA Splicing" (all FDR < 0.05, gene ratio ~0.22). Individual splicing factor genes (LSM6, LSM8, SF3A1, SLU7) are significantly downregulated in COVID-19 and CoV other vs healthy, but not in Influenza or Bacterial infections.
 
 **Important caveat:** The coronavirus group (CoV other) in this dataset consists predominantly of young adults (~19 years median age) while COVID-19 patients are older and more severely ill. Age and disease severity confounding cannot be fully excluded despite model adjustment. This finding warrants validation in age-matched cohorts.
 
 ### 5. COVID-19-specific genes are enriched for cell cycle and mitotic pathways
 
-145 genes are specific to COVID-19 (not shared with other infections). Reactome ORA identifies Cell Cycle, Cell Cycle Mitotic, M Phase, and Cell Cycle Checkpoints as top enriched pathways — consistent with coronavirus-driven dysregulation of host cell cycle machinery and B cell proliferative responses during adaptive immune activation.
+145 genes are specific to COVID-19 (not shared with other infections). Reactome ORA identifies Cell Cycle, Cell Cycle Mitotic, M Phase, and Cell Cycle Checkpoints as top enriched pathways which is consistent with coronavirus-driven dysregulation of host cell cycle machinery and B cell proliferative responses during adaptive immune activation.
 
 ---
 
@@ -114,7 +114,7 @@ Genes shared between COVID-19 and CoV other but not Influenza or Bacterial infec
 
 - **Multi-cohort age variation:** Age varies systematically across cohorts due to different recruitment sources (university students vs emergency department patients). We include age as an adjustment variable, but residual confounding cannot be fully excluded in a cross-cohort observational design.
 - **Blood transcriptomics:** Captures systemic immune response, not local infection site biology. Nasal or respiratory samples would show stronger pathogen-specific signatures, particularly for interferon-stimulated genes.
-- **Unequal group sizes:** COVID-19 n=45 vs Influenza n=17 after deduplication — affects statistical power for Influenza comparisons.
+- **Unequal group sizes:** COVID-19 n=45 vs Influenza n=17 after deduplication which affects statistical power for Influenza comparisons.
 - **One sample per subject:** Original authors used `duplicateCorrelation()` to retain all timepoints while accounting for within-subject correlation. We used one sample per subject (earliest timepoint) to enable fair DESeq2 vs limma-voom comparison. Results for COVID-19 may differ from the original paper due to reduced sample size.
 
 ---
@@ -133,4 +133,4 @@ McClain MT, Constantine FJ, Henao R, et al. Dysregulated transcriptional respons
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details.
