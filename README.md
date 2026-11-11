@@ -26,26 +26,15 @@ Do respiratory infections leave distinct transcriptional signatures in blood, an
 infectious-disease-transcriptomics/
 │
 ├── scripts/
-│   ├── 00_data_download.py          # GEOparse download + metadata
-│   ├── 01_cohort_overview.py        # Cohort demographics visualization
-│   ├── 02_qc_library_size.py        # Library size and gene detection QC
-│   ├── 03_pca_before_qc.py          # PCA before outlier removal
-│   ├── 04_pca_after_qc.py           # PCA after outlier removal
-│   ├── 05_de_analysis.R             # limma-voom differential expression
-│   ├── 06_de_gene_counts.R          # DE gene count summary
-│   ├── 07_upset_overlap.R           # UpSet plot of DEG overlaps
-│   ├── 08_venn_four_way.R           # Four-way Venn diagram
-│   ├── 09_pathway_analysis.R        # GSEA + ORA (Reactome)
-│   ├── 10_heatmap_top50.R           # Top 50 DE gene heatmap
-│   └── 11_splicing_boxplots.R       # Coronavirus splicing gene boxplots
+│   ├── 01_data_download_qc.ipynb        # GEO download, cohort overview, QC, PCA (Python)
+│   ├── 02_limma_analysis.R              # Main analysis: limma-voom DE, DEG overlaps (UpSet, Venn),
+│   │                                    #   Reactome GSEA/ORA, top-50 heatmap, splicing boxplots
+│   └── 02_deseq2_limma_analysis.R       # Supplementary: DESeq2 vs limma-voom vs edgeR comparison
 │
-├── data/
-│   ├── raw/                         # Downloaded files (not tracked)
-│   └── processed/                   # Filtered count matrix, metadata (not tracked)
+├── data/                                # Downloaded files (not tracked)
+├── results/                             # Filtered counts, metadata, DE results (not tracked)
 │
-├── results/                         # DE results, pathway enrichment (not tracked)
-│
-└── figures/
+└── figures/GSE161731/
     ├── 00_voom_mean_variance.png
     ├── 01_cohort_overview.png
     ├── 02_qc_library_size.png
