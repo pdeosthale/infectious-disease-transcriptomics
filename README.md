@@ -14,7 +14,7 @@ Do respiratory infections leave distinct transcriptional signatures in blood, an
 
 | Accession | Description | Cohorts | n |
 |---|---|---|---|
-| [GSE161731](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE161731) | McClain et al. 2021, *Nat Commun* | COVID-19, Influenza, Bacterial, CoV other, Healthy | 198 samples (post-QC) |
+| [GSE161731](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE161731) | McClain et al. 2021, *Nat Commun* | COVID-19, Influenza, Bacterial, CoV other, Healthy | 136 samples (analysis set; see QC below) |
 
 **Design:** 5 cohorts, 2 batches. Age is a significant covariate — bacterial cohort median age ~60 vs ~20 for other groups. Model: `~ batch + gender + age + cohort`.
 
@@ -79,8 +79,9 @@ infectious-disease-transcriptomics/
 
 ### Quality Control
 - Library size and gene detection assessed per cohort
-- PCA-based outlier removal: 2 extreme outliers identified on PC1 and removed
-- Post-QC: 198 samples retained across 5 cohorts
+- PCA-based outlier removal: 2 extreme outliers identified on PC1 and removed (198 → 196 samples)
+- Sample filtering before DE: 2 subjects appearing in more than one cohort removed (→ 192); earliest timepoint kept per subject (→ 151); samples missing gender (→ 137) or age (→ 136) removed
+- Final analysis set: 136 independent samples — healthy 17, COVID-19 45, Influenza 17, Bacterial 23, CoV other 34
 
 ### Differential Expression
 limma-voom with model `~ batch + gender + age + cohort`. One sample per subject (earliest timepoint). Healthy controls as reference. Four contrasts: COVID-19, Influenza, Bacterial, CoV other vs Healthy. FDR < 0.05, |log2FC| > 1.
