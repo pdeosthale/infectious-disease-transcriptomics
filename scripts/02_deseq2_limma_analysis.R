@@ -73,7 +73,8 @@ library(RColorBrewer)
 library(patchwork)
 
 # Set working directory to project root
-setwd("~/Desktop/infectious-disease-transcriptomics")
+setwd("~/Desktop/github_repos/infectious-disease-transcriptomics")
+dir.create("figures/GSE161731/deseq2_comparison", showWarnings = FALSE, recursive = TRUE)
 
 
 # ==============================================================================
@@ -280,7 +281,7 @@ dge    <- DGEList(counts = counts, group = meta$cohort)
 dge    <- calcNormFactors(dge, method = "TMM")
 design <- model.matrix(~ batch + gender + age + cohort, data = meta)
 
-png("figures/GSE161731/10a_voom_mean_variance.png",
+png("figures/GSE161731/deseq2_comparison/10a_voom_mean_variance.png",
     width=8, height=6, units="in", res=300)
 v <- voom(dge, design, plot=TRUE)
 dev.off()
@@ -350,7 +351,7 @@ p_fc <- ggplot(comp_df, aes(x=deseq2_log2FC, y=limma_logFC, color=category)) +
   theme(legend.position="top", plot.title=element_text(face="bold",size=14),
         axis.title=element_text(face="bold"), panel.grid.minor=element_blank())
 print(p_fc)
-ggsave("figures/GSE161731/10b_deseq2_vs_limma_fc.png", p_fc,
+ggsave("figures/GSE161731/deseq2_comparison/10b_deseq2_vs_limma_fc.png", p_fc,
        width=8, height=7, dpi=300)
 cat("\nFold change correlation (Pearson r):", round(cor_val,3), "\n")
 
@@ -419,10 +420,10 @@ make_volcano <- function(res_df, comparison_name, filename) {
   cat("Saved:", filename, "\n")
 }
 
-make_volcano(deseq2_results$COVID19,   "COVID-19",  "figures/GSE161731/05a_volcano_covid_vs_healthy.png")
-make_volcano(deseq2_results$Influenza, "Influenza",  "figures/GSE161731/05b_volcano_influenza_vs_healthy.png")
-make_volcano(deseq2_results$Bacterial, "Bacterial",  "figures/GSE161731/05c_volcano_bacterial_vs_healthy.png")
-make_volcano(deseq2_results$CoV_other, "CoV Other",  "figures/GSE161731/05d_volcano_cov_other_vs_healthy.png")
+make_volcano(deseq2_results$COVID19,   "COVID-19",  "figures/GSE161731/deseq2_comparison/05a_volcano_covid_vs_healthy.png")
+make_volcano(deseq2_results$Influenza, "Influenza",  "figures/GSE161731/deseq2_comparison/05b_volcano_influenza_vs_healthy.png")
+make_volcano(deseq2_results$Bacterial, "Bacterial",  "figures/GSE161731/deseq2_comparison/05c_volcano_bacterial_vs_healthy.png")
+make_volcano(deseq2_results$CoV_other, "CoV Other",  "figures/GSE161731/deseq2_comparison/05d_volcano_cov_other_vs_healthy.png")
 
 
 # ==============================================================================
@@ -448,7 +449,7 @@ ggplot(summary_df, aes(x=comparison, y=count, fill=direction)) +
        x="", y="Number of DE Genes", fill="") +
   theme_minimal(base_size=13) +
   theme(axis.text.x=element_text(angle=45, hjust=1))
-ggsave("figures/GSE161731/06_de_gene_counts.png", width=8, height=6, dpi=300)
+ggsave("figures/GSE161731/deseq2_comparison/06_de_gene_counts.png", width=8, height=6, dpi=300)
 
 
 # ==============================================================================
@@ -481,8 +482,8 @@ upset_input <- data.frame(
   CoV_other = as.integer(all_genes %in% sig_genes$CoV_other)
 )
 
-dir.create("figures/GSE161731", showWarnings=FALSE, recursive=TRUE)
-svg("figures/GSE161731/07_upset_de_genes.svg", width=14, height=8)
+dir.create("figures/GSE161731/deseq2_comparison", showWarnings=FALSE, recursive=TRUE)
+svg("figures/GSE161731/deseq2_comparison/07_upset_de_genes.svg", width=14, height=8)
 upset(upset_input,
       sets           = c("COVID19","Influenza","Bacterial","CoV_other"),
       keep.order     = TRUE,
@@ -802,10 +803,10 @@ comp_labels <- c(COVID19   = "COVID-19",
                  CoV_other = "CoV Other")
 
 comp_files <- c(
-  COVID19   = "figures/GSE161731/08a_gsea_reactome_covid.png",
-  Influenza = "figures/GSE161731/08b_gsea_reactome_influenza.png",
-  Bacterial = "figures/GSE161731/08c_gsea_reactome_bacterial.png",
-  CoV_other = "figures/GSE161731/08d_gsea_reactome_cov_other.png"
+  COVID19   = "figures/GSE161731/deseq2_comparison/08a_gsea_reactome_covid.png",
+  Influenza = "figures/GSE161731/deseq2_comparison/08b_gsea_reactome_influenza.png",
+  Bacterial = "figures/GSE161731/deseq2_comparison/08c_gsea_reactome_bacterial.png",
+  CoV_other = "figures/GSE161731/deseq2_comparison/08d_gsea_reactome_cov_other.png"
 )
 
 # Map comparison names to edgeR results list keys
@@ -923,7 +924,7 @@ rownames(vst_top50) <- top50_covid$SYMBOL
 vst_top50_z <- t(scale(t(vst_top50)))
 
 if (dev.cur() > 1) dev.off()  # close any open device safely
-png("figures/GSE161731/09a_heatmap_deseq2_vst.png",
+png("figures/GSE161731/deseq2_comparison/09a_heatmap_deseq2_vst.png",
     width=14, height=12, units="in", res=300)
 pheatmap(vst_top50_z,
          annotation_col=col_annotation, annotation_colors=annotation_colors,
@@ -940,7 +941,7 @@ rownames(voom_top50) <- top50_covid$SYMBOL
 voom_top50_z <- t(scale(t(voom_top50)))
 
 if (dev.cur() > 1) dev.off()  # close any open device safely
-png("figures/GSE161731/09b_heatmap_limma_voom.png",
+png("figures/GSE161731/deseq2_comparison/09b_heatmap_limma_voom.png",
     width=14, height=12, units="in", res=300)
 pheatmap(voom_top50_z,
          annotation_col=col_annotation, annotation_colors=annotation_colors,
@@ -985,7 +986,7 @@ cat("Correlation with limma-voom:",
               as.vector(edger_top50_z), use = "complete.obs"), 3), "\n")
 
 if (dev.cur() > 1) dev.off()
-png("figures/GSE161731/09c_heatmap_edger.png",
+png("figures/GSE161731/deseq2_comparison/09c_heatmap_edger.png",
     width = 14, height = 12, units = "in", res = 300)
 pheatmap(edger_top50_z,
          annotation_col    = col_annotation,
@@ -1206,7 +1207,7 @@ p_3way <- p_dl + p_de + p_le +
                   plot.subtitle = element_text(size = 10))
   )
 
-ggsave("figures/GSE161731/11_threeway_fc_scatter.png",
+ggsave("figures/GSE161731/deseq2_comparison/11_threeway_fc_scatter.png",
        p_3way, width = 14, height = 5, dpi = 300)
 cat("Three-way FC scatter plot saved\n")
 
@@ -1237,7 +1238,7 @@ for (comp in comp_names) {
   )
   
   comp_label <- gsub("_vs_healthy", " vs Healthy", gsub("_", " ", comp))
-  filename <- paste0("figures/GSE161731/12_upset_threeway_", comp, ".svg")
+  filename <- paste0("figures/GSE161731/deseq2_comparison/12_upset_threeway_", comp, ".svg")
   library(gridGraphics)
   
   svg(filename, width = 14, height = 8)

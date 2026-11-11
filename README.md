@@ -29,7 +29,7 @@ infectious-disease-transcriptomics/
 │   ├── 01_data_download_qc.ipynb        # GEO download, cohort overview, QC, PCA (Python)
 │   ├── 02_limma_analysis.R              # Main analysis: limma-voom DE, DEG overlaps (UpSet, Venn),
 │   │                                    #   Reactome GSEA/ORA, top-50 heatmap, splicing boxplots
-│   └── 02_deseq2_limma_analysis.R       # Supplementary: DESeq2 vs limma-voom vs edgeR comparison
+│   └── 02_deseq2_limma_analysis.R       # Supplementary: DESeq2 vs limma-voom vs edgeR comparison (figures go to figures/GSE161731/deseq2_comparison/, not committed)
 │
 ├── data/                                # Downloaded files (not tracked)
 ├── results/                             # Filtered counts, metadata, DE results (not tracked)
